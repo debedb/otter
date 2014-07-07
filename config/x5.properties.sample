@@ -1,0 +1,27 @@
+cdh.host=cdh.myhost.com
+
+cdh.upload_path=/x5/upload
+
+cdh.ssh_key_path=/Users/microput/.ssh/foo.pem
+	
+cdh.ssh_user=ubuntu
+	
+cdh.unix_user=hdfs
+	
+# Assume only Impala will be used (set to 0 if HDFS in general would be used with things
+# like Mahout).
+cdh.impala_only=0
+
+mysql.host=mysql.myhost.com
+	
+mysql.user=root
+
+mysql.pass=root
+
+mysql.metadata_db=metadata
+
+mysql.reporting_db=analytics
+
+dwmgr.port=8088
+
+dwmgr.dataset_model=x5

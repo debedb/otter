@@ -1,0 +1,73 @@
+1. Mahout
+2. X5 vs Microput metadata format
+3. S3 import source partitioned already
+4. Partitioning by date within
+5. Microput nginx part
+6. Writeup
+
+------------------------------------------------------------------------
+[5/30/14 5:16:28 PM] Gregory Rayzman: 1. Create stage table
+[5/30/14 5:16:40 PM] Gregory Rayzman: create EXTERNAL table    test_partition_stage
+(
+id              int,
+report_date     string, 
+type            string, 
+co1             string, 
+co2             string, 
+co3             string, 
+co4             string, 
+co5             string, 
+co6             string, 
+co7             string, 
+co8             string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '|'
+stored as textfile
+;
+ALTER TABLE test_partition_stage set LOCATION '/user/impala';
+[5/30/14 5:17:21 PM] Gregory Rayzman: 2. Create new partition table for "permanent" storage"
+[5/30/14 5:17:27 PM] Gregory Rayzman: create table   test_partition
+(
+id              int,
+type            string, 
+co1             string, 
+co2             string, 
+co3             string, 
+co4             string, 
+co5             string, 
+co6             string, 
+co7             string, 
+co8             string
+)
+partitioned by (report_date string)
+;
+[5/30/14 5:17:33 PM] Gregory Rayzman: 3. Load data into it
+[5/30/14 5:17:40 PM] Gregory Rayzman: insert into test_partition
+(
+id         ,
+type       ,
+co1        ,
+co2        ,
+co3        ,
+co4        ,
+co5        ,
+co6        ,
+co7        ,
+co8        ,
+report_date
+)
+select 
+id      ,
+type    ,
+co1     ,
+co2     ,
+co3     ,
+co4     ,
+co5     ,
+co6     ,
+co7     ,
+co8     ,
+concat_ws( '', '20', substr( report_date, 7,2), '-',  substr( report_date, 4, 2),'-',  substr( report_date, 1, 2))  report_date
+from test_partition_stage where report_date not like 'TRN%' 
+;
