@@ -48,7 +48,7 @@ public class OfficeDb {
 		Logger.log("Connected to " + url + ".");
 	}
 
-	public void addDataset(Dataset ds) throws SQLException {
+	public int addDataset(Dataset ds) throws SQLException {
 		Connection c = getConnection();
 		c.setAutoCommit(false);
 		try {
@@ -86,7 +86,7 @@ public class OfficeDb {
 			}
 			ps.executeBatch();
 			c.commit();
-
+			return datasetId;
 		} catch (Exception sqle) {
 			c.rollback();
 			throw sqle;

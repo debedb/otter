@@ -41,7 +41,7 @@ public class Impala {
 		return impala;
 	}
 
-	public void createDb(String name) throws SQLException, OtterException {
+	public void createDb(String name) throws SQLException, OtterException, ClassNotFoundException {
 		Connection c = getConnection();
 		if (!name.matches("[A-Za-z][A-Za-z0-9]+")) {
 			throw new OtterException("Name not allowed: " + name);

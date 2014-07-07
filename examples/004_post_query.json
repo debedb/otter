@@ -1,0 +1,5 @@
+# Execute a query
+# POST /query/<ID>
+{ 
+	query : "SELECT COUNT(TRN_ID), MIN(TRN_ID), MAX(TRN_ID) FROM transactions1"
+}

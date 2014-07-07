@@ -14,16 +14,7 @@ import com.enremmeta.otter.entity.Dataset;
 public class ApiHandler {
 	
 	public void put_dataset_create(Object arg) throws Exception {
-		Map map = (Map) arg;
 		
-		Dataset ds = new Dataset(map);
-		OfficeDb db = OfficeDb.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-		Impala imp = Impala.getInstance();
-
-		cdhc.addDataset(ds);
-		imp.addDataset(ds);
-		db.addDataset(ds);
 	}
 
 	public void post_dataset_loaddata(Object arg) throws Exception {

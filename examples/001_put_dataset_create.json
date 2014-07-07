@@ -1,4 +1,5 @@
 # Creates data set
+# PUT /dataset/create
 {  
   "name"    : "transactions1",
   "columns" : [ { "name" : "TRN_ID",
