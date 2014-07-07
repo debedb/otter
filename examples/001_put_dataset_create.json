@@ -1,0 +1,38 @@
+# Creates data set
+{  
+  "name"    : "transactions1",
+  "columns" : [ { "name" : "TRN_ID",
+                  "type" : "STRING"
+                 },
+                 { "name" : "TRN_DATE", 
+                   "type" : "TIMESTAMP",
+	                "fmt"  : "dd.MM.yy"
+                 },
+                 { "name" : "TRN_TYPE", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "TRN_CRD_NO", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "LOC_CODE", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "LOC_DESCRIPTION", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "TRN_TOTAL_VALUE", 
+                   "type" : "BIGINT"
+                 },
+                 { "name" : "PRD_CODE", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "PRD_DESCRIPTION", 
+                   "type" : "STRING"
+                 },
+                 { "name" : "TDT_QTY", 
+                   "type" : "DOUBLE"
+                 },
+                 { "name" : "TDT_VALUE", 
+                   "type" : "DOUBLE"
+		 		}]
+}
