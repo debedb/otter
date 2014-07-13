@@ -25,3 +25,6 @@ mysql.reporting_db=analytics
 dwmgr.port=8088
 
 dwmgr.dataset_model=x5
+
+source.1.type=s3
+source.1.bucket=tq.s.adotube.com
