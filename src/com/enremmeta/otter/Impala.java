@@ -54,7 +54,7 @@ public class Impala {
 	// TODO partitioning...
 	public void addDataset(Dataset ds) throws SQLException,
 			ClassNotFoundException {
-		String sql = "CREATE EXTERNAL TABLE " + ds.getName() + " ( ";
+		String sql = "CREATE EXTERNAL TABLE x5." + ds.getName() + " ( ";
 		String colClause = "";
 		for (DatasetColumn col : ds.getColumns()) {
 			if (colClause.length() > 0) {

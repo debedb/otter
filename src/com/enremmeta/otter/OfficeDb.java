@@ -84,7 +84,7 @@ public class OfficeDb {
 				ps.setObject(5, fmt);
 				ps.addBatch();
 			}
-			ps.executeBatch();
+			ps.executeBatch();	
 			c.commit();
 			return datasetId;
 		} catch (Exception sqle) {

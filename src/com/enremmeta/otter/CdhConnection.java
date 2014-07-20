@@ -85,6 +85,9 @@ public class CdhConnection {
 		exitShell();
 	}
 
+	/**
+	 * Creates a new dataset.
+	 */
 	public void addDataset(Dataset ds) throws Exception {
 		sudoCdhUser();
 		sendCommand("hadoop fs -mkdir hdfs:/user/x5/" + ds.getName());

@@ -46,8 +46,7 @@ public class Client {
 			json += line;
 		}
 		String url = "http://localhost:8088/";
-		String restUrlElts[] = jsonFilename.replace(".json", "").split("_");
-
+		String[] restUrlElts = jsonFilename.replace(".json","").split("_");
 		String httpVerb = restUrlElts[1];
 		String noun = restUrlElts[2];
 		url += noun;
@@ -80,7 +79,7 @@ public class Client {
 		}
 
 		System.out.println("Executing " + httpVerb.toUpperCase() + " " + url);
-		
+
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity entity = response.getEntity();
 		String responseTxt = "";
@@ -123,9 +122,22 @@ public class Client {
 
 		String id = null;
 		for (String jsonFile : jsonFiles) {
+			// Yeah yeah should have used a filter. But screw anonymous classes
+			// instead of first-class functions. That's my protest!
+			if (!jsonFile.endsWith(".json")) {
+				System.err.println("Ignoring " + jsonFile);
+				continue;
+			}
+			try {
+				String filePrefix = jsonFile.split("_")[0];
+				Long.valueOf(filePrefix);
+			} catch (NumberFormatException nfe) {
+				System.err.println("Ignoring file " + jsonFile);
+				continue;
+			}
 			@SuppressWarnings("rawtypes")
 			Map result = runCommand(jsonFile, id);
-			String id2 = (String) result.get("id");
+			String id2 =String.valueOf(result.get("id"));
 			if (id2 != null) {
 				id = id2;
 			}

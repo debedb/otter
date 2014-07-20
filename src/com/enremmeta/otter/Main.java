@@ -152,7 +152,7 @@ public class Main extends AbstractHandler {
 		if (args.length == 0) {
 			Logger.log("Assuming config in " + configFile.getAbsolutePath());
 		} else {
-			configFile = new File(args[1]);
+			configFile = new File(args[0]);
 		}
 		Logger.log("Reading properties from " + configFile.getAbsolutePath()
 				+ "...");

@@ -1,5 +1,9 @@
 package com.enremmeta.otter.jersey;
 
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -12,6 +16,7 @@ import javax.ws.rs.core.MediaType;
 import com.enremmeta.otter.CdhConnection;
 import com.enremmeta.otter.Impala;
 import com.enremmeta.otter.OfficeDb;
+import com.enremmeta.otter.OtterException;
 import com.enremmeta.otter.entity.Dataset;
 
 @Path("/dataset")
@@ -20,7 +25,7 @@ public class DatasetSvc {
 	@Path("/create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String create(Dataset ds) throws Exception {
+	public Map<String, Integer> create(Dataset ds) throws Exception {
 		OfficeDb db = OfficeDb.getInstance();
 		CdhConnection cdhc = CdhConnection.getInstance();
 		Impala imp = Impala.getInstance();
@@ -30,10 +35,18 @@ public class DatasetSvc {
 		// 3 Create external table at /otter/...
 		// 4.* Create internal table
 		// 5.* Copy with partitioning
-		cdhc.addDataset(ds);
-		imp.addDataset(ds);
-		int id = db.addDataset(ds);
-		return "";
+		Map<String, Integer> retval = new HashMap<String, Integer>();
+		try {
+			cdhc.addDataset(ds);
+			imp.addDataset(ds);
+			int id = db.addDataset(ds);
+			retval.put("id", id);
+		} catch (SQLException sqle) {
+			throw new OtterException(sqle);
+		} catch (Exception e) {
+			throw new OtterException(e);
+		}
+		return retval;
 	}
 
 	@GET
