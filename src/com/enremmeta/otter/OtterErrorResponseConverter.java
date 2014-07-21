@@ -10,8 +10,20 @@ public class OtterErrorResponseConverter {
 	
 	public OtterErrorResponseConverter(OtterException e) {
 		super();
-		this.errorMessage = e.getReason();
+		this.errorMessage = e.getMessage();
+		this.errorClass = e.getClass().getCanonicalName();
+		Throwable cause = e.getCause();
+		if (cause != null) {
+			causeMessage = cause.getMessage();
+			causeClass = cause.getClass().getCanonicalName();
+		}
 	}
+
+	private String errorClass;
+	
+	private String causeClass;
+	private String causeMessage;
+	
 	
 	private String errorMessage;
 	

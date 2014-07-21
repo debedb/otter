@@ -85,12 +85,34 @@ public class CdhConnection {
 		exitShell();
 	}
 
+	// java.lang.IllegalArgumentException: AWS Access Key ID and Secret Access
+	// Key must be specified as the username or password (respectively) of a s3n
+	// URL, or by setting the fs.s3n.awsAccessKeyId or fs.s3n.awsSecretAccessKey
+	// properties (respectively).
+
+	public void loadDataFromS3(String bucket, String path, String accessKey,
+			String secretKey, String tableName) throws OtterException {
+		// hadoop distcp
+		try {
+			sudoCdhUser();
+			String cmd = "hadoop distcp " + " -Dfs.s3n.awsAccessKeyId="
+					+ accessKey + " -Dfs.s3n.awsSecretAccessKey=" + secretKey
+					+ " s3n://" + bucket + path + "hdfs:"
+					+ Constants.OTTER_HDFS_PREFIX + tableName;
+			sendCommand(cmd);
+			popSudos();
+		} catch (Exception e) {
+			throw new OtterException(e);
+		}
+	}
+
 	/**
 	 * Creates a new dataset.
 	 */
 	public void addDataset(Dataset ds) throws Exception {
 		sudoCdhUser();
-		sendCommand("hadoop fs -mkdir hdfs:/user/x5/" + ds.getName());
+		sendCommand("hadoop fs -mkdir hdfs:" + Constants.OTTER_HDFS_PREFIX
+				+ ds.getName());
 		popSudos();
 	}
 
@@ -100,8 +122,19 @@ public class CdhConnection {
 		sudoCdhUser();
 		String uploadPath = Config.getInstance().getProperty(
 				Config.PROP_CDH_UPLOAD_PATH);
-		sendCommand("hadoop fs -copyFromLocal " + uploadPath + fname
-				+ " hdfs:/user/x5/" + ds.getName());
+		sendCommand("hadoop fs -copyFromLocal " + uploadPath + fname + " hdfs:"
+				+ Constants.OTTER_HDFS_PREFIX + ds.getName());
+	}
+
+	public void testCleanup() throws OtterException {
+		try {
+			sudoCdhUser();
+			sendCommand("hadoop fs -rmdir hdfs:" + Constants.OTTER_HDFS_PREFIX
+					+ "test1");
+			popSudos();
+		} catch (Exception e) {
+			throw new OtterException(e);
+		}
 	}
 
 	private Session sess;

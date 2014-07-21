@@ -46,11 +46,11 @@ public class OfficeDb {
 		Logger.log("Connecting to " + url + "...");
 		con = DriverManager.getConnection(url, connectionProps);
 		Logger.log("Connected to " + url + ".");
+		con.setAutoCommit(false);
 	}
 
 	public int addDataset(Dataset ds) throws SQLException {
 		Connection c = getConnection();
-		c.setAutoCommit(false);
 		try {
 			PreparedStatement ps = c.prepareStatement(
 					"INSERT INTO dataset (title) VALUES (?)",
@@ -84,13 +84,45 @@ public class OfficeDb {
 				ps.setObject(5, fmt);
 				ps.addBatch();
 			}
-			ps.executeBatch();	
+			ps.executeBatch();
+			ps.close();
 			c.commit();
 			return datasetId;
 		} catch (Exception sqle) {
-			c.rollback();
+			rollback();
 			throw sqle;
 		} finally {
+		}
+	}
+
+	public int testCleanup() throws OtterException {
+
+		Connection c;
+		try {
+			c = getConnection();
+		} catch (SQLException e) {
+			throw new OtterException(e);
+		}
+		try {
+			PreparedStatement ps = c
+					.prepareStatement("DELETE FROM dataset WHERE title = 'test1'");
+			int upd = ps.executeUpdate();
+			ps.close();
+			c.commit();
+			return upd;
+		} catch (SQLException sqle) {
+			rollback();
+			throw new OtterException(sqle);
+		} finally {
+		}
+	}
+
+	private void rollback() {
+		try {
+			Connection c = getConnection();
+			c.rollback();
+		} catch (SQLException sqle) {
+
 		}
 	}
 

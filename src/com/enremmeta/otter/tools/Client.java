@@ -46,7 +46,7 @@ public class Client {
 			json += line;
 		}
 		String url = "http://localhost:8088/";
-		String[] restUrlElts = jsonFilename.replace(".json","").split("_");
+		String[] restUrlElts = jsonFilename.replace(".json", "").split("_");
 		String httpVerb = restUrlElts[1];
 		String noun = restUrlElts[2];
 		url += noun;
@@ -78,8 +78,13 @@ public class Client {
 			((HttpEntityEnclosingRequestBase) request).setEntity(body);
 		}
 
-		System.out.println("Executing " + httpVerb.toUpperCase() + " " + url);
+		System.out.println("****** REQUEST ******");
+		System.out.println(httpVerb.toUpperCase() + " " + url);
+		System.out.println("");
+		System.out.println(json);
+		System.out.println("*********************");
 
+		httpClient = new DefaultHttpClient();
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity entity = response.getEntity();
 		String responseTxt = "";
@@ -96,15 +101,21 @@ public class Client {
 		int code = sl.getStatusCode();
 		System.out.println(code + " " + sl.getReasonPhrase());
 		Map resp = null;
-		if (code >= 400) {
-			System.out.println(responseTxt);
-			System.out.println("**********************************");
-		} else {
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+		try {
 			resp = mapper.readValue(responseTxt, Map.class);
+			System.out.println("****** RESPONSE *******");
 			System.out.println(resp);
+			System.out.println("**********************");
+		} catch (Exception e) {
+			System.out.println("****** RESPONSE *******");
+			System.out.println(responseTxt);
+			System.out.println("**********************");
+			throw e;
 		}
+
 		return resp;
 	}
 
@@ -113,7 +124,6 @@ public class Client {
 
 	public static void main(String[] a) throws Exception {
 
-		httpClient = new DefaultHttpClient();
 		String cwd = new File(".").getAbsolutePath();
 		jsonDir = new File(cwd, "examples");
 
@@ -137,7 +147,12 @@ public class Client {
 			}
 			@SuppressWarnings("rawtypes")
 			Map result = runCommand(jsonFile, id);
-			String id2 =String.valueOf(result.get("id"));
+
+			Object idObj = result.get("id");
+			String id2 = null;
+			if (idObj != null) {
+				id2 = String.valueOf(idObj);
+			}
 			if (id2 != null) {
 				id = id2;
 			}

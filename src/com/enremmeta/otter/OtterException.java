@@ -21,14 +21,6 @@ public class OtterException extends Exception {
 	public void setStatus(int status) {
 		this.status = status;
 	}
-
-	public String getReason() {
-		String retval = getMessage();
-		if (getCause() != null) {
-			retval += "; caused by " + getCause();
-		}
-		return retval;
-	}
 	
 	public OtterException() {
 		super();

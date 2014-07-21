@@ -52,4 +52,13 @@ public class Config {
 		String retval = props.getProperty(p);
 		return retval;
 	}
+
+	public void validate() throws OtterException {
+		String keyPath = (String) props.get(Config.PROP_CDH_SSH_KEY_PATH);
+		File keyFile = new File(keyPath);
+		if (!keyFile.exists()) {
+			throw new OtterException(Config.PROP_CDH_SSH_KEY_PATH + " "
+					+ keyFile + " does not exist");
+		}
+	}
 }

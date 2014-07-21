@@ -1,7 +1,7 @@
 # Creates data set
 # PUT /dataset/create
 {  
-  "name"    : "transactions1",
+  "name"    : "test1",
   "columns" : [ { "name" : "TRN_ID",
                   "type" : "STRING"
                  },

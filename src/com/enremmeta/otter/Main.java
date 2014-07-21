@@ -124,8 +124,9 @@ public class Main extends AbstractHandler {
 		jerseyServlet.setInitOrder(1);
 		jerseyServlet.setInitParameter(ServerProperties.PROVIDER_PACKAGES,
 				"com.enremmeta.otter");
-		jerseyServlet.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-		
+		jerseyServlet.setInitParameter(
+				"com.sun.jersey.api.json.POJOMappingFeature", "true");
+
 		// server.setHandler(new Main());
 		server.start();
 		Logger.log("Listening on " + port + "...");
@@ -156,7 +157,9 @@ public class Main extends AbstractHandler {
 		}
 		Logger.log("Reading properties from " + configFile.getAbsolutePath()
 				+ "...");
-		Config.getInstance().load(configFile);
+		Config config = Config.getInstance();
+		config.load(configFile);
+		config.validate();
 		setUp();
 		startServer();
 	}
