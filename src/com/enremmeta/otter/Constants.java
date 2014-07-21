@@ -5,5 +5,7 @@ public interface Constants {
 	
 	String IMPALA_HDFS_PREFIX = "/user/impala/";
 	
+	String HDFS_USER = "hdfs";
+	
 	String OTTER_HDFS_PREFIX = IMPALA_HDFS_PREFIX + DB_NAME + "/";
 }

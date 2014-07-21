@@ -4,7 +4,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hive.jdbc.HiveDriver;
 
@@ -27,7 +32,13 @@ public class Impala {
 		String impalaHost = config.getProperty(Config.PROP_CDH_HOST);
 		String url = "jdbc:hive2://" + impalaHost + ":21050/;auth=noSasl";
 		Logger.log("Connecting to " + url + "...");
-		Class klass = HiveDriver.class;// Class.forName("org.apache.hive.jdbc.HiveDriver");
+		Class klass0 = HiveDriver.class;
+		Class klass = klass0;
+		try {
+			klass = Class.forName("org.apache.hive.jdbc.HiveDriver");
+		} catch (ClassNotFoundException cnfe) {
+			//
+		}
 		con = DriverManager.getConnection(url);
 		Logger.log("Connected to " + url + ".");
 	}
@@ -82,7 +93,7 @@ public class Impala {
 	public void refreshTable(String name) throws SQLException {
 		Connection c = getConnection();
 		String sql = "ALTER TABLE " + Constants.DB_NAME + "." + name + " "
-				+ "LOCATION '" + Constants.OTTER_HDFS_PREFIX + name + "'";
+				+ "SET LOCATION '" + Constants.OTTER_HDFS_PREFIX + name + "'";
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 	}
@@ -103,27 +114,53 @@ public class Impala {
 		}
 	}
 
-	public void query(String query) throws SQLException {
+	public Map query(String query) throws SQLException {
+		Map map = new HashMap<>();
 		Connection c = getConnection();
-
+		List list = new ArrayList<List>();
 		PreparedStatement ps = c.prepareStatement("USE " + Constants.DB_NAME);
 		ps.execute();
 		ps = c.prepareStatement(query);
 		ResultSet rs = ps.executeQuery();
-		while (rs.next()) {
-
+		java.sql.ResultSetMetaData rsmd = rs.getMetaData();
+		int colCnt = rsmd.getColumnCount();
+		List meta = new ArrayList<>();
+		for (int i = 1; i <= colCnt; i++) {
+			Map colMeta = new HashMap();
+			colMeta.put("name", rsmd.getColumnName(i));
+			colMeta.put("type", rsmd.getColumnTypeName(i));
+			meta.add(colMeta);
 		}
+		map.put("metadata", meta);
+		while (rs.next()) {
+			List row = new ArrayList();
+			for (int i = 1; i <= colCnt; i++) {
+				row.add(rs.getObject(i));
+			}
+			list.add(row);
+		}
+		rs.close();
+		map.put("data", list);
+		return map;
 	}
 
-	public void getSample(String tableName, int from, int to) throws SQLException {
+	public List getSample(String tableName, int limit)
+			throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement("SELECT * FROM "
-				+ Constants.DB_NAME + "." + tableName + " LIMIT " + from + ","
-				+ to);
+				+ Constants.DB_NAME + "." + tableName + " LIMIT " + limit);
 		ResultSet rs = ps.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int colCnt = rsmd.getColumnCount();
+		List retval = new ArrayList();
 		while (rs.next()) {
-
+			List row = new ArrayList();
+			for (int i = 1; i < colCnt; i++) {
+				row.add(rs.getObject(i));
+			}
+			retval.add(row);
 		}
+		return retval;
 	}
 
 	public long getCount(String dsName) throws SQLException,
@@ -135,7 +172,7 @@ public class Impala {
 		long retval = -1;
 		if (rs.next()) {
 			retval = (long) rs.getObject(1);
-			Logger.log(dsName + " currently has " + +retval + " rows");
+			// Logger.log(dsName + " currently has " + +retval + " rows");
 		}
 		return retval;
 	}

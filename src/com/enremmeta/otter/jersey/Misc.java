@@ -18,7 +18,7 @@ import com.enremmeta.otter.entity.Query;
 public class Misc {
 
 	@POST
-	@Path("/query")
+	@Path("query")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map query(Query q) throws OtterException {
@@ -26,7 +26,7 @@ public class Misc {
 			String query = q.getQuery();
 			Map map = new HashMap();
 			Impala imp = Impala.getInstance();
-			imp.query(query);
+			map = imp.query(query);
 			return map;
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);

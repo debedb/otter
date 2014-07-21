@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Client {
 
-	private static Map runCommand(String jsonFilename, String id)
+	private static Object runCommand(String jsonFilename, String id)
 			throws Exception {
 		File jsonFile = new File(jsonDir, jsonFilename);
 		BufferedReader br = new BufferedReader(new FileReader(jsonFile));
@@ -50,13 +50,23 @@ public class Client {
 		String httpVerb = restUrlElts[1];
 		String noun = restUrlElts[2];
 		url += noun;
+		String queryStr = "";
 		for (int i = 3; i < restUrlElts.length; i++) {
 			String elt = restUrlElts[i];
 			if (elt.equals("ID")) {
 				url += "/" + id;
+			} else if (elt.startsWith("$")) {
+				if (queryStr.length() > 0) {
+					queryStr += "&";
+				}
+				queryStr += elt.substring(1) + "=" + restUrlElts[i + 1];
+				i++;
 			} else {
 				url += "/" + elt;
 			}
+		}
+		if (queryStr.length() > 0) {
+			url += "?" + queryStr;
 		}
 
 		HttpRequestBase request = null;
@@ -100,20 +110,21 @@ public class Client {
 		StatusLine sl = response.getStatusLine();
 		int code = sl.getStatusCode();
 		System.out.println(code + " " + sl.getReasonPhrase());
-		Map resp = null;
+		Object resp = null;
 
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+		System.out.println("****** RESPONSE *******");
+		System.out.println(responseTxt);
+		System.out.println("**********************");
 		try {
 			resp = mapper.readValue(responseTxt, Map.class);
-			System.out.println("****** RESPONSE *******");
-			System.out.println(resp);
-			System.out.println("**********************");
 		} catch (Exception e) {
-			System.out.println("****** RESPONSE *******");
-			System.out.println(responseTxt);
-			System.out.println("**********************");
-			throw e;
+			try {
+				resp = mapper.readValue(responseTxt, List.class);
+			} catch (Exception e2) {
+				throw e2;
+			}
 		}
 
 		return resp;
@@ -146,15 +157,17 @@ public class Client {
 				continue;
 			}
 			@SuppressWarnings("rawtypes")
-			Map result = runCommand(jsonFile, id);
+			Object result = runCommand(jsonFile, id);
 
-			Object idObj = result.get("id");
-			String id2 = null;
-			if (idObj != null) {
-				id2 = String.valueOf(idObj);
-			}
-			if (id2 != null) {
-				id = id2;
+			if (result instanceof Map) {
+				Object idObj = ((Map) result).get("id");
+				String id2 = null;
+				if (idObj != null) {
+					id2 = String.valueOf(idObj);
+				}
+				if (id2 != null) {
+					id = id2;
+				}
 			}
 		}
 	}

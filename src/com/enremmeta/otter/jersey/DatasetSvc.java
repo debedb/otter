@@ -1,6 +1,7 @@
 package com.enremmeta.otter.jersey;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,9 @@ import javax.ws.rs.core.MediaType;
 
 import com.enremmeta.otter.CdhConnection;
 import com.enremmeta.otter.Config;
+import com.enremmeta.otter.Constants;
 import com.enremmeta.otter.Impala;
+import com.enremmeta.otter.Logger;
 import com.enremmeta.otter.OfficeDb;
 import com.enremmeta.otter.OtterException;
 import com.enremmeta.otter.entity.Dataset;
@@ -30,6 +33,8 @@ public class DatasetSvc {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Integer> create(Dataset ds) throws Exception {
+		
+		Logger.log("Entered /dataset/create, thread " + Thread.currentThread());
 		OfficeDb db = OfficeDb.getInstance();
 		CdhConnection cdhc = CdhConnection.getInstance();
 		Impala imp = Impala.getInstance();
@@ -54,19 +59,21 @@ public class DatasetSvc {
 	}
 
 	@GET
-	@Path("/meta/{id}")
+	@Path("/data/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public void getSample(@PathParam("id") int id,
+	public List getSample(@PathParam("id") int id,
 			@QueryParam("rows") int rows) throws OtterException {
+		List list = new ArrayList();
 		try {
 			Impala imp = Impala.getInstance();
 			OfficeDb db = OfficeDb.getInstance();
 
 			Dataset ds = db.getDataset(id);
-			imp.getSample(ds.getName(), 0, rows);
+			list = imp.getSample(ds.getName(),  rows);
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
 		}
+		return list;
 	}
 
 	@GET
@@ -97,7 +104,7 @@ public class DatasetSvc {
 		try {
 			Dataset ds = db.getDataset(Integer.parseInt(id));
 			String dsName = ds.getName();
-			long rowsBefore = imp.getCount(dsName);
+			long rowsBefore = imp.getCount(Constants.DB_NAME + "." + dsName);
 			for (LoadSource source : sources) {
 				int location = source.getLocation();
 
@@ -122,7 +129,7 @@ public class DatasetSvc {
 						dsName);
 			}
 			imp.refreshTable(dsName);
-			long rowsAfter = imp.getCount(dsName);
+			long rowsAfter = imp.getCount(Constants.DB_NAME + "." + dsName);
 			map.put("rows_before", rowsBefore);
 			map.put("rows_after", rowsAfter);
 		} catch (SQLException sqle) {

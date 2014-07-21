@@ -33,16 +33,36 @@ public class CdhConnection {
 	public static CdhConnection getInstance() {
 		return cdhc;
 	}
-
+	
 	private String getShellOutput() throws IOException {
+		return getShellOutput(true);
+	}
+
+	private String getShellOutput(boolean waitForPrompt) throws IOException {
+		String curPrompt = "OTTER" + this.userStack.size() + ">";
 		String retval = "";
+		boolean first = false;
 		while (true) {
 			int bytesToRead = this.is.available();
 			if (bytesToRead == 0) {
-				break;
+				if (!first && !waitForPrompt) {
+					break;
+				}
+				try {
+					Thread.sleep(1000);
+					first = false;
+				} catch (InterruptedException ie) {
+				}
+				if (retval.endsWith(curPrompt)) {
+					break;
+				}
+ 				continue;
 			}
 			byte[] bytes = new byte[bytesToRead];
-			this.is.read(bytes);
+			int read = this.is.read(bytes);
+			if (read < 0) {
+				break;
+			}
 			String line = new String(bytes);
 			retval += line;
 			log("Received: " + line);
@@ -50,34 +70,96 @@ public class CdhConnection {
 		return retval;
 	}
 
-	private void sendCommand(String cmd) throws IOException {
-		getShellOutput();
+	private void shellCommand(String cmd, boolean waitForPrompt) throws IOException {
+		getShellOutput(false);
 		log("Sending: " + cmd);
 		cmd += "\n";
 		this.os.write(cmd.getBytes());
 		this.os.flush();
+		if (waitForPrompt) {
+			log("Waiting for prompt " + getPrompt());
+		}
+		getShellOutput(waitForPrompt);
+	}
+
+	private void execCommandAs(String cmd) throws IOException, JSchException {
+		execCommandAs(cmd, Constants.HDFS_USER);
+	}
+
+	private void execCommandAs(String cmd, String user) throws IOException,
+			JSchException {
+		cmd = "sudo su -l " + user + " -c '" + cmd + "'";
+		execCommand(cmd);
+	}
+
+	private void execCommand(String cmd) throws IOException, JSchException {
+		getShellOutput();
+		log("Sending: " + cmd);
+
+		// cmd += "\n";
+		// this.os.write(cmd.getBytes());
+		// this.os.flush();
+		// exec 'scp -t rfile' remotely
+
+		Channel channel = sess.openChannel("exec");
+		((ChannelExec) channel).setCommand(cmd);
+
+		OutputStream curOut = channel.getOutputStream();
+		InputStream curIn = channel.getInputStream();
+		channel.connect();
+		byte[] tmp = new byte[1024];
+
+		while (true) {
+			while (curIn.available() > 0) {
+				int i = curIn.read(tmp, 0, 1024);
+				if (i < 0)
+					break;
+				System.out.print(new String(tmp, 0, i));
+			}
+			if (channel.isClosed()) {
+				if (curIn.available() > 0) {
+					continue;
+				}
+				log("exit-status: " + channel.getExitStatus());
+				break;
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (Exception ee) {
+			}
+		}
+		channel.disconnect();
+
 		getShellOutput();
 	}
 
 	private List<String> userStack = new ArrayList<String>();
 
+	private List<String> promptStack = new ArrayList<String>();
+
 	private void exitShell() throws IOException {
-		log("Users on stack before exit: " + userStack.toString());
-		sendCommand("exit");
+		// log("Users on stack before exit: " + userStack.toString());
+		shellCommand("exit", false);
+		shellCommand("whoami", false);
 		userStack.remove(userStack.size() - 1);
-		log("Users on stack after exit: " + userStack.toString());
+		setPrompt();
+		// log("Users on stack after exit: " + userStack.toString());
 	}
 
 	private void pushUser(String user) {
 		userStack.add(user);
-		log("Users on stack: " + userStack.toString());
+		// log("Users on stack: " + userStack.toString());
 	}
 
 	private void sudoCdhUser() throws Exception {
-		sendCommand("sudo su -");
+		shellCommand("sudo su -", false);
+		shellCommand("whoami", false);
 		pushUser("root");
-		sendCommand("su - " + cdhUser);
+		setPrompt();
+		shellCommand("su - " + cdhUser, false);
+		shellCommand("whoami", false);
 		pushUser(cdhUser);
+		setPrompt();
 	}
 
 	private void popSudos() throws Exception {
@@ -90,16 +172,20 @@ public class CdhConnection {
 	// URL, or by setting the fs.s3n.awsAccessKeyId or fs.s3n.awsSecretAccessKey
 	// properties (respectively).
 
+	// sudo su -l hdfs -c 'pwd'
 	public void loadDataFromS3(String bucket, String path, String accessKey,
 			String secretKey, String tableName) throws OtterException {
 		// hadoop distcp
 		try {
+			log("loadDataFromS3(" + bucket + ", " + path +", " + accessKey + ", SECRET_KEY, " + tableName + ")");
 			sudoCdhUser();
+			String myFname = new File(path).getName() + "_"
+					+ System.currentTimeMillis();
 			String cmd = "hadoop distcp " + " -Dfs.s3n.awsAccessKeyId="
 					+ accessKey + " -Dfs.s3n.awsSecretAccessKey=" + secretKey
-					+ " s3n://" + bucket + path + "hdfs:"
-					+ Constants.OTTER_HDFS_PREFIX + tableName;
-			sendCommand(cmd);
+					+ " s3n://" + bucket + path + " hdfs:"
+					+ Constants.OTTER_HDFS_PREFIX + tableName + "/" + myFname;
+			shellCommand(cmd, true);
 			popSudos();
 		} catch (Exception e) {
 			throw new OtterException(e);
@@ -111,8 +197,9 @@ public class CdhConnection {
 	 */
 	public void addDataset(Dataset ds) throws Exception {
 		sudoCdhUser();
-		sendCommand("hadoop fs -mkdir hdfs:" + Constants.OTTER_HDFS_PREFIX
-				+ ds.getName());
+		shellCommand("hadoop fs -mkdir hdfs:" + Constants.OTTER_HDFS_PREFIX
+				+ ds.getName(), true);
+		
 		popSudos();
 	}
 
@@ -122,15 +209,15 @@ public class CdhConnection {
 		sudoCdhUser();
 		String uploadPath = Config.getInstance().getProperty(
 				Config.PROP_CDH_UPLOAD_PATH);
-		sendCommand("hadoop fs -copyFromLocal " + uploadPath + fname + " hdfs:"
-				+ Constants.OTTER_HDFS_PREFIX + ds.getName());
+		shellCommand("hadoop fs -copyFromLocal " + uploadPath + fname
+				+ " hdfs:" + Constants.OTTER_HDFS_PREFIX + ds.getName(), true);
 	}
 
 	public void testCleanup() throws OtterException {
 		try {
 			sudoCdhUser();
-			sendCommand("hadoop fs -rmdir hdfs:" + Constants.OTTER_HDFS_PREFIX
-					+ "test1");
+			shellCommand("hadoop fs -rm -r -f hdfs:"
+					+ Constants.OTTER_HDFS_PREFIX + "test1", true);
 			popSudos();
 		} catch (Exception e) {
 			throw new OtterException(e);
@@ -172,7 +259,29 @@ public class CdhConnection {
 		}
 
 		Logger.log("Connected to " + cdhHost + " as " + user + ".");
+		setPrompt();
 	}
+	
+	private String getPrompt() {
+		String prompt = "OTTER" + userStack.size() + ">";
+		return prompt;
+	}
+	
+	private void setPrompt() throws IOException {
+		String prompt = getPrompt();
+		log("Setting prompt to " + prompt);
+		String cmd ="export PS1='" + prompt + "'\r\n";
+		getShellOutput(false);
+		this.os.write(cmd.getBytes());
+		this.os.write("echo\n".getBytes());
+		this.os.flush();
+		getShellOutput(false);
+	}
+
+
+	private static String TEST_COMMAND = "echo TEST_TEST_TEST\r\n";
+	private static String TEST_STRING = "TEST_TEST_TEST";
+	private String prompt;
 
 	private int checkAck(InputStream in) throws IOException {
 		int b = in.read();
@@ -228,7 +337,6 @@ public class CdhConnection {
 		// get I/O streams for remote scp
 		OutputStream out = channel.getOutputStream();
 		InputStream in = channel.getInputStream();
-
 		channel.connect();
 
 		int chk = checkAck(in);
