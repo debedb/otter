@@ -45,7 +45,7 @@ public class Client {
 			}
 			json += line;
 		}
-		String url = "http://localhost:8088/";
+		String url = baseUrl;
 		String[] restUrlElts = jsonFilename.replace(".json", "").split("_");
 		String httpVerb = restUrlElts[1];
 		String noun = restUrlElts[2];
@@ -130,11 +130,15 @@ public class Client {
 		return resp;
 	}
 
+	private static String baseUrl = "http://localhost:8088/";
+
 	private static File jsonDir;
 	private static HttpClient httpClient;
 
 	public static void main(String[] a) throws Exception {
-
+		if (a.length > 0) {
+			baseUrl = a[0];
+		}
 		String cwd = new File(".").getAbsolutePath();
 		jsonDir = new File(cwd, "examples");
 

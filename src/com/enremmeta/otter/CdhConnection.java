@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jetty.annotations.AnnotationParser.MyFieldVisitor;
+
 import com.enremmeta.otter.entity.Dataset;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -179,12 +181,22 @@ public class CdhConnection {
 		try {
 			log("loadDataFromS3(" + bucket + ", " + path +", " + accessKey + ", SECRET_KEY, " + tableName + ")");
 			sudoCdhUser();
+			
+			// Set up job just in case
+			DistcpJob job = new DistcpJob();
+			job.setBucket(bucket);
+			
+			
 			String myFname = new File(path).getName() + "_"
 					+ System.currentTimeMillis();
+			job.setLocalFile(myFname);
+			
 			String cmd = "hadoop distcp " + " -Dfs.s3n.awsAccessKeyId="
 					+ accessKey + " -Dfs.s3n.awsSecretAccessKey=" + secretKey
 					+ " s3n://" + bucket + path + " hdfs:"
 					+ Constants.OTTER_HDFS_PREFIX + tableName + "/" + myFname;
+			job.setFullCommand(cmd);
+			
 			shellCommand(cmd, true);
 			popSudos();
 		} catch (Exception e) {

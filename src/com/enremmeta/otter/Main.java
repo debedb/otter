@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -21,6 +23,7 @@ import org.glassfish.jersey.server.ServerProperties;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.std.InetAddressSerializer;
 
 public class Main extends AbstractHandler {
 
@@ -112,12 +115,44 @@ public class Main extends AbstractHandler {
 		int port = Integer
 				.parseInt(config.getProperty(Config.PROP_DW_MGR_PORT));
 
-		Server server = new Server(port);
+		// System.setProperty("jetty.host", "0.0.0.0");
+		// System.setProperty("jetty.port", String.valueOf(port));
+		 Server server = new Server(port);
 
+		//InetSocketAddress inetAddr = InetSocketAddress.createUnresolved(
+			//	"0.0.0.0", port);
+
+		//Server server = new Server(new InetSocketAddress("54.235.199.212", port));
+		//Server server = new Server(new InetSocketAddress("ec2-54-235-199-212.compute-1.amazonaws.com", port));
+		
 		ServletContextHandler context = new ServletContextHandler(
 				ServletContextHandler.NO_SESSIONS);
 		context.setContextPath("/");
 		server.setHandler(context);
+
+//		InetAddress[] addrs = InetAddress
+//				.getAllByName("ec2-54-235-199-212.compute-1.amazonaws.com");
+//		String[] vhosts = new String[addrs.length];
+//		System.out.println("Hello dolly!!!");
+//		for (int i = 0; i < addrs.length; i++) {
+//			System.out.println(i);
+//			System.out.println(addrs[i].getCanonicalHostName());
+//			System.out.println(addrs[i].getHostAddress());
+//			System.out.println(addrs[i].getHostName());
+//			System.out.println(addrs[i].getAddress().toString());
+//			System.out.println("Adding " + addrs[i].getHostName()
+//					+ " to vhosts");
+//			vhosts[i] = addrs[i].getHostName();
+//		}
+//
+//		if (false) {
+//			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!");
+//			server = new Server(new InetSocketAddress(addrs[0], port));
+//			context = new ServletContextHandler(
+//					ServletContextHandler.NO_SESSIONS);
+//			context.setContextPath("/");
+//			server.setHandler(context);
+//		}
 
 		ServletHolder jerseyServlet = context.addServlet(
 				org.glassfish.jersey.servlet.ServletContainer.class, "/*");

@@ -140,6 +140,57 @@ public class DatasetSvc {
 		return map;
 	}
 
+	@PUT
+	@Path("/async_load/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Map asyncUploadDataset(@PathParam("id") String id,
+			List<LoadSource> sources) throws OtterException {
+		OfficeDb db = OfficeDb.getInstance();
+		Impala imp = Impala.getInstance();
+		CdhConnection cdhc = CdhConnection.getInstance();
+
+		Map map = new HashMap();
+		Config config = Config.getInstance();
+		try {
+			Dataset ds = db.getDataset(Integer.parseInt(id));
+			String dsName = ds.getName();
+			long rowsBefore = imp.getCount(Constants.DB_NAME + "." + dsName);
+			for (LoadSource source : sources) {
+				int location = source.getLocation();
+
+				String sourceType = config.getProperty("source." + location
+						+ ".type");
+				if (!sourceType.equalsIgnoreCase("s3")) {
+					String errorMessage = "Unsupported source type: "
+							+ sourceType + " (location: " + location + ")";
+					OtterException e = new OtterException(errorMessage);
+					e.setEntity("source." + location + ".type");
+					e.setStatus(400);
+					throw e;
+				}
+				String s3Bucket = config.getProperty("source." + location
+						+ ".bucket");
+				String accessKey = config.getProperty("source." + location
+						+ ".access");
+				String secretKey = config.getProperty("source." + location
+						+ ".secret");
+				String path = source.getPath();
+				cdhc.loadDataFromS3(s3Bucket, path, accessKey, secretKey,
+						dsName);
+			}
+			imp.refreshTable(dsName);
+			long rowsAfter = imp.getCount(Constants.DB_NAME + "." + dsName);
+			map.put("rows_before", rowsBefore);
+			map.put("rows_after", rowsAfter);
+		} catch (SQLException sqle) {
+			throw new OtterException(sqle);
+		} catch (ClassNotFoundException cnfe) {
+			throw new OtterException(cnfe);
+		}
+		return map;
+	}
+
 	@DELETE
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
