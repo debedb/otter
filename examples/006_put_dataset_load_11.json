@@ -1,0 +1,10 @@
+# Loads data into dataset
+# PUT /dataset/load/<ID>
+[
+{"path" : "/test1/test1000.dsv",
+ "location" : 1
+ },
+{"path" : "/test1/test1000.dsv",
+ "location" : 1
+ }
+]

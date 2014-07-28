@@ -1,0 +1,3 @@
+# Get data from dataset (as CSV)
+# GET /dataset/data/<ID>
+# No body.

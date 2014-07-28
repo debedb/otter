@@ -1,0 +1,3 @@
+# Gets dataset metadata.
+# GET /dataset/meta/<ID>
+# No body.

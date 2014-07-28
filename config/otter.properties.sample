@@ -22,9 +22,16 @@ mysql.metadata_db=metadata
 
 mysql.reporting_db=analytics
 
-dwmgr.port=8088
+otter.port=8088
 
-dwmgr.dataset_model=x5
+# Metadata version
+otter.metadata_version=1
 
+# Set to 1 if we want to manage metadata in DB ourselves.
+otter.manage_metadata=0
+
+# Storage types
 source.1.type=s3
-source.1.bucket=tq.s.adotube.com
+source.1.bucket=cloudera-impala-s3
+source.1.access=XXX
+source.1.secret=ZZZ
