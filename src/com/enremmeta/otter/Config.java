@@ -26,7 +26,7 @@ public class Config {
 
 	public static final String PROP_MYSQL_USER = "mysql.user";
 
-	public static final String PROP_DW_MGR_PORT = "dwmgr.port";
+	public static final String PROP_OTTER_MGR_PORT = "otter.port";
 
 	private static Config config;
 
@@ -61,4 +61,31 @@ public class Config {
 					+ keyFile + " does not exist");
 		}
 	}
+
+	public String getOtterHdfsPrefix() {
+		return Constants.IMPALA_HDFS_PREFIX + getImpalaDbName() + "/";
+	}
+
+	public String getImpalaDbName() {
+		return getProperty("cdh.impala_db");
+	}
+
+	public boolean getBooleanProperty(String prop) {
+		String value = getProperty(prop);
+		value = value.trim();
+		if (value == null || value.equals("")) {
+			return false;
+		}
+		if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("y") || value.equalsIgnoreCase("yes")) {
+			return true;
+		}
+		try {
+			int intVal = Integer.parseInt(value);
+			return intVal != 0;
+		} catch (NumberFormatException nfe) {
+
+		}
+		return false;
+	}
+
 }

@@ -113,7 +113,7 @@ public class Main extends AbstractHandler {
 	private static void startServer() throws Exception {
 		Config config = Config.getInstance();
 		int port = Integer
-				.parseInt(config.getProperty(Config.PROP_DW_MGR_PORT));
+				.parseInt(config.getProperty(Config.PROP_OTTER_MGR_PORT));
 
 		// System.setProperty("jetty.host", "0.0.0.0");
 		// System.setProperty("jetty.port", String.valueOf(port));
@@ -184,7 +184,7 @@ public class Main extends AbstractHandler {
 	}
 
 	public static void main(String[] args) throws Exception {
-		File configFile = new File("config/x5.properties");
+		File configFile = new File("config/otter.properties");
 		if (args.length == 0) {
 			Logger.log("Assuming config in " + configFile.getAbsolutePath());
 		} else {

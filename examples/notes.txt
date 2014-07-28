@@ -1,4 +1,10 @@
-1. Dataset metadata
-2. Intermediate datasets
-3. Scheduling 
-4. Do I ever use db
+https://oysterlabs.atlassian.net/browse/XPA-132
+
+Workflow:
+When FE gets BE api request for task notifications status PUT /tasks/ {id}/execution_status {status: done} then FE sends api request to BE
+GET results_meta/?task_id={id}
+&sort=result_id&sort_dir=desc&limit=1 and we save response results' metadata to FE db (result and result_table) and therefore we know about result metadata (result id and its table's ids)
+Now we can get result's data for repository browser.
+GET result_tables/ {table_id/table_name}
+/?limit=&offset=
+

@@ -96,25 +96,26 @@ public class OfficeDb {
 	}
 
 	public int testCleanup() throws OtterException {
-
-		Connection c;
-		try {
-			c = getConnection();
-		} catch (SQLException e) {
-			throw new OtterException(e);
-		}
-		try {
-			PreparedStatement ps = c
-					.prepareStatement("DELETE FROM dataset WHERE title = 'test1'");
-			int upd = ps.executeUpdate();
-			ps.close();
-			c.commit();
-			return upd;
-		} catch (SQLException sqle) {
-			rollback();
-			throw new OtterException(sqle);
-		} finally {
-		}
+//
+//		Connection c;
+//		try {
+//			c = getConnection();
+//		} catch (SQLException e) {
+//			throw new OtterException(e);
+//		}
+//		try {
+//			PreparedStatement ps = c
+//					.prepareStatement("DELETE FROM dataset WHERE title = 'test1'");
+//			int upd = ps.executeUpdate();
+//			ps.close();
+//			c.commit();
+//			return upd;
+//		} catch (SQLException sqle) {
+//			rollback();
+//			throw new OtterException(sqle);
+//		} finally {
+//		}
+		return 0;
 	}
 
 	private void rollback() {
@@ -129,8 +130,8 @@ public class OfficeDb {
 	public Dataset getDataset(int datasetId) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c
-				.prepareStatement("SELECT ds.title, dp.name, dp.type, dp.fmt FROM dataset ds JOIN dataset_property dp "
-						+ "ON dp.dataset_id = ds.id WHERE ds.id = ?");
+				.prepareStatement("SELECT us.db_name, up.name, up.type FROM universal_source us JOIN universal_property up ON up.universal_source_id = us.id "
+						+ "WHERE us.id = ?");
 		ps.setObject(1, datasetId);
 		ResultSet rs = ps.executeQuery();
 		Dataset retval = null;
@@ -142,7 +143,7 @@ public class OfficeDb {
 			DatasetColumn col = new DatasetColumn();
 			col.setName(rs.getString(2));
 			col.setType(rs.getString(3));
-			col.setFmt(rs.getString(4));
+			//col.setFmt(rs.getString(4));
 			retval.getColumns().add(col);
 		}
 		return retval;

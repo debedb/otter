@@ -2,38 +2,38 @@
 # PUT /dataset/create
 {  
   "name"    : "test1",
-  "columns" : [ { "name" : "TRN_ID",
-                  "type" : "STRING"
+  "columns" : [ { "name" : "trn_id",
+                  "type" : "string"
                  },
-                 { "name" : "TRN_DATE", 
-                   "type" : "TIMESTAMP",
+                 { "name" : "trn_date", 
+                   "type" : "timestamp",
 	                "fmt"  : "dd.MM.yy"
                  },
-                 { "name" : "TRN_TYPE", 
-                   "type" : "STRING"
+                 { "name" : "trn_type", 
+                   "type" : "string"
                  },
-                 { "name" : "TRN_CRD_NO", 
-                   "type" : "STRING"
+                 { "name" : "trn_crd_no", 
+                   "type" : "string"
                  },
-                 { "name" : "LOC_CODE", 
-                   "type" : "STRING"
+                 { "name" : "loc_code", 
+                   "type" : "string"
                  },
-                 { "name" : "LOC_DESCRIPTION", 
-                   "type" : "STRING"
+                 { "name" : "loc_description", 
+                   "type" : "string"
                  },
-                 { "name" : "TRN_TOTAL_VALUE", 
-                   "type" : "BIGINT"
+                 { "name" : "trn_total_value", 
+                   "type" : "bigint"
                  },
-                 { "name" : "PRD_CODE", 
-                   "type" : "STRING"
+                 { "name" : "prd_code", 
+                   "type" : "string"
                  },
-                 { "name" : "PRD_DESCRIPTION", 
-                   "type" : "STRING"
+                 { "name" : "prd_description", 
+                   "type" : "string"
                  },
-                 { "name" : "TDT_QTY", 
-                   "type" : "DOUBLE"
+                 { "name" : "tdt_qty", 
+                   "type" : "double"
                  },
-                 { "name" : "TDT_VALUE", 
-                   "type" : "DOUBLE"
+                 { "name" : "tdt_value", 
+                   "type" : "double"
 		 		}]
 }

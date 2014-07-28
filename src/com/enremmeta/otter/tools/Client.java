@@ -3,6 +3,7 @@ package com.enremmeta.otter.tools;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import com.enremmeta.otter.Logger;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -98,13 +100,18 @@ public class Client {
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity entity = response.getEntity();
 		String responseTxt = "";
-		br = new BufferedReader(new InputStreamReader(entity.getContent()));
-		while (true) {
-			String line = br.readLine();
-			if (line == null) {
-				break;
+		if (entity != null) {
+			InputStream is = entity.getContent();
+			br = new BufferedReader(new InputStreamReader(is));
+			while (true) {
+				String line = br.readLine();
+				if (line == null) {
+					break;
+				}
+				responseTxt += line;
 			}
-			responseTxt += line;
+		} else {
+			Logger.log("<EMPTY BODY>");
 		}
 
 		StatusLine sl = response.getStatusLine();

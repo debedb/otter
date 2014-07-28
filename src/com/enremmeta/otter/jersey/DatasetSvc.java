@@ -33,7 +33,7 @@ public class DatasetSvc {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Integer> create(Dataset ds) throws Exception {
-		
+
 		Logger.log("Entered /dataset/create, thread " + Thread.currentThread());
 		OfficeDb db = OfficeDb.getInstance();
 		CdhConnection cdhc = CdhConnection.getInstance();
@@ -48,8 +48,11 @@ public class DatasetSvc {
 		try {
 			cdhc.addDataset(ds);
 			imp.addDataset(ds);
-			int id = db.addDataset(ds);
-			retval.put("id", id);
+			if (Config.getInstance()
+					.getBooleanProperty("otter.manage_metadata")) {
+				int id = db.addDataset(ds);
+				retval.put("id", id);
+			}
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
 		} catch (Exception e) {
@@ -61,15 +64,14 @@ public class DatasetSvc {
 	@GET
 	@Path("/data/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List getSample(@PathParam("id") int id,
-			@QueryParam("rows") int rows) throws OtterException {
+	public List getSample(@PathParam("id") int id, @QueryParam("rows") int rows)
+			throws OtterException {
 		List list = new ArrayList();
 		try {
 			Impala imp = Impala.getInstance();
 			OfficeDb db = OfficeDb.getInstance();
-
 			Dataset ds = db.getDataset(id);
-			list = imp.getSample(ds.getName(),  rows);
+			list = imp.getSample(ds.getName(), rows);
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
 		}
@@ -104,10 +106,11 @@ public class DatasetSvc {
 		try {
 			Dataset ds = db.getDataset(Integer.parseInt(id));
 			String dsName = ds.getName();
-			long rowsBefore = imp.getCount(Constants.DB_NAME + "." + dsName);
+			long rowsBefore = imp.getCount(Config.getInstance()
+					.getImpalaDbName() + "." + dsName);
 			for (LoadSource source : sources) {
 				int location = source.getLocation();
-
+				String delim  = source.getDelim();
 				String sourceType = config.getProperty("source." + location
 						+ ".type");
 				if (!sourceType.equalsIgnoreCase("s3")) {
@@ -129,7 +132,8 @@ public class DatasetSvc {
 						dsName);
 			}
 			imp.refreshTable(dsName);
-			long rowsAfter = imp.getCount(Constants.DB_NAME + "." + dsName);
+			long rowsAfter = imp.getCount(Config.getInstance()
+					.getImpalaDbName() + "." + dsName);
 			map.put("rows_before", rowsBefore);
 			map.put("rows_after", rowsAfter);
 		} catch (SQLException sqle) {
@@ -155,7 +159,8 @@ public class DatasetSvc {
 		try {
 			Dataset ds = db.getDataset(Integer.parseInt(id));
 			String dsName = ds.getName();
-			long rowsBefore = imp.getCount(Constants.DB_NAME + "." + dsName);
+			long rowsBefore = imp.getCount(Config.getInstance()
+					.getImpalaDbName() + "." + dsName);
 			for (LoadSource source : sources) {
 				int location = source.getLocation();
 
@@ -180,7 +185,8 @@ public class DatasetSvc {
 						dsName);
 			}
 			imp.refreshTable(dsName);
-			long rowsAfter = imp.getCount(Constants.DB_NAME + "." + dsName);
+			long rowsAfter = imp.getCount(Config.getInstance()
+					.getImpalaDbName() + "." + dsName);
 			map.put("rows_before", rowsBefore);
 			map.put("rows_after", rowsAfter);
 		} catch (SQLException sqle) {
@@ -194,7 +200,16 @@ public class DatasetSvc {
 	@DELETE
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String delete(@PathParam("id") String id) throws OtterException {
-		throw new OtterException("Not implemented");
+	public void delete(@PathParam("id") int id) throws OtterException {
+		OfficeDb db = OfficeDb.getInstance();
+		Dataset ds;
+		try {
+			ds = db.getDataset(id);
+		} catch (SQLException e) {
+			throw new OtterException(e);
+		}
+		String dsName = ds.getName();
+		CdhConnection.getInstance().deleteDataset(dsName);
+		Impala.getInstance().deleteDataset(dsName);
 	}
 }

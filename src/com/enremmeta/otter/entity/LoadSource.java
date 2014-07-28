@@ -25,6 +25,16 @@ public class LoadSource implements Serializable {
 	}
 
 	private String path;
+	
+	private String delim = ",";
+
+	public String getDelim() {
+		return delim;
+	}
+
+	public void setDelim(String delim) {
+		this.delim = delim;
+	}
 
 	private int location;
 

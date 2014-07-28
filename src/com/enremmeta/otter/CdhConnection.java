@@ -35,7 +35,7 @@ public class CdhConnection {
 	public static CdhConnection getInstance() {
 		return cdhc;
 	}
-	
+
 	private String getShellOutput() throws IOException {
 		return getShellOutput(true);
 	}
@@ -58,7 +58,7 @@ public class CdhConnection {
 				if (retval.endsWith(curPrompt)) {
 					break;
 				}
- 				continue;
+				continue;
 			}
 			byte[] bytes = new byte[bytesToRead];
 			int read = this.is.read(bytes);
@@ -72,7 +72,8 @@ public class CdhConnection {
 		return retval;
 	}
 
-	private void shellCommand(String cmd, boolean waitForPrompt) throws IOException {
+	private void shellCommand(String cmd, boolean waitForPrompt)
+			throws IOException {
 		getShellOutput(false);
 		log("Sending: " + cmd);
 		cmd += "\n";
@@ -179,24 +180,25 @@ public class CdhConnection {
 			String secretKey, String tableName) throws OtterException {
 		// hadoop distcp
 		try {
-			log("loadDataFromS3(" + bucket + ", " + path +", " + accessKey + ", SECRET_KEY, " + tableName + ")");
+			log("loadDataFromS3(" + bucket + ", " + path + ", " + accessKey
+					+ ", SECRET_KEY, " + tableName + ")");
 			sudoCdhUser();
-			
+
 			// Set up job just in case
 			DistcpJob job = new DistcpJob();
 			job.setBucket(bucket);
-			
-			
+
 			String myFname = new File(path).getName() + "_"
 					+ System.currentTimeMillis();
 			job.setLocalFile(myFname);
-			
+
 			String cmd = "hadoop distcp " + " -Dfs.s3n.awsAccessKeyId="
 					+ accessKey + " -Dfs.s3n.awsSecretAccessKey=" + secretKey
 					+ " s3n://" + bucket + path + " hdfs:"
-					+ Constants.OTTER_HDFS_PREFIX + tableName + "/" + myFname;
+					+ Config.getInstance().getOtterHdfsPrefix() + tableName
+					+ "/" + myFname;
 			job.setFullCommand(cmd);
-			
+
 			shellCommand(cmd, true);
 			popSudos();
 		} catch (Exception e) {
@@ -208,11 +210,24 @@ public class CdhConnection {
 	 * Creates a new dataset.
 	 */
 	public void addDataset(Dataset ds) throws Exception {
+		execAsCdh("hadoop fs -mkdir hdfs:"
+				+ Config.getInstance().getOtterHdfsPrefix() + ds.getName());
+	}
+
+	private void execAsCdh(String cmd) throws Exception {
 		sudoCdhUser();
-		shellCommand("hadoop fs -mkdir hdfs:" + Constants.OTTER_HDFS_PREFIX
-				+ ds.getName(), true);
-		
+		shellCommand(cmd, true);
 		popSudos();
+	}
+	
+	public void deleteDataset(String name) throws OtterException {
+		try {
+			String cmd ="hadoop fs -rm -r -f hdfs:"
+					+ Config.getInstance().getOtterHdfsPrefix() + name;
+			execAsCdh(cmd);
+		} catch (Exception e) {
+			throw new OtterException(e);
+		}
 	}
 
 	// hadoop fs -mkdir hdfs:/user/oy/txns
@@ -221,15 +236,17 @@ public class CdhConnection {
 		sudoCdhUser();
 		String uploadPath = Config.getInstance().getProperty(
 				Config.PROP_CDH_UPLOAD_PATH);
-		shellCommand("hadoop fs -copyFromLocal " + uploadPath + fname
-				+ " hdfs:" + Constants.OTTER_HDFS_PREFIX + ds.getName(), true);
+		shellCommand(
+				"hadoop fs -copyFromLocal " + uploadPath + fname + " hdfs:"
+						+ Config.getInstance().getOtterHdfsPrefix()
+						+ ds.getName(), true);
 	}
 
 	public void testCleanup() throws OtterException {
 		try {
 			sudoCdhUser();
 			shellCommand("hadoop fs -rm -r -f hdfs:"
-					+ Constants.OTTER_HDFS_PREFIX + "test1", true);
+					+ Config.getInstance().getOtterHdfsPrefix() + "test1", true);
 			popSudos();
 		} catch (Exception e) {
 			throw new OtterException(e);
@@ -273,23 +290,22 @@ public class CdhConnection {
 		Logger.log("Connected to " + cdhHost + " as " + user + ".");
 		setPrompt();
 	}
-	
+
 	private String getPrompt() {
 		String prompt = "OTTER" + userStack.size() + ">";
 		return prompt;
 	}
-	
+
 	private void setPrompt() throws IOException {
 		String prompt = getPrompt();
 		log("Setting prompt to " + prompt);
-		String cmd ="export PS1='" + prompt + "'\r\n";
+		String cmd = "export PS1='" + prompt + "'\r\n";
 		getShellOutput(false);
 		this.os.write(cmd.getBytes());
 		this.os.write("echo\n".getBytes());
 		this.os.flush();
 		getShellOutput(false);
 	}
-
 
 	private static String TEST_COMMAND = "echo TEST_TEST_TEST\r\n";
 	private static String TEST_STRING = "TEST_TEST_TEST";

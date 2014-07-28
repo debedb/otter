@@ -45,7 +45,10 @@ public class Impala {
 
 	private Impala() {
 		super();
+		config = Config.getInstance();
 	}
+
+	private Config config;
 
 	private static Impala impala = new Impala();
 
@@ -61,7 +64,18 @@ public class Impala {
 		}
 		PreparedStatement ps = c.prepareStatement("CREATE DATABASE " + name);
 		ps.execute();
+	}
 
+	public void deleteDataset(String name) throws OtterException {
+		try {
+			Connection c = getConnection();
+			String sql = "DELETE FROM " + config.getImpalaDbName() + "." + name;
+			PreparedStatement ps = c.prepareStatement(sql);
+			ps.execute();
+			refreshTable(name);
+		} catch (SQLException sqle) {
+			throw new OtterException(sqle);
+		}
 	}
 
 	// TODO partitioning...
@@ -70,7 +84,7 @@ public class Impala {
 	 */
 	public void addDataset(Dataset ds) throws SQLException,
 			ClassNotFoundException {
-		String sql = "CREATE EXTERNAL TABLE " + Constants.DB_NAME + "."
+		String sql = "CREATE EXTERNAL TABLE " + config.getImpalaDbName() + "."
 				+ ds.getName() + " ( ";
 		String colClause = "";
 		for (DatasetColumn col : ds.getColumns()) {
@@ -80,20 +94,22 @@ public class Impala {
 			colClause += col.getName() + " " + col.getType();
 		}
 		sql += colClause + ") ";
+		// TODO!!!
 		sql += "ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' ";
 		sql += "STORED AS TEXTFILE ";
-		sql += "LOCATION '" + Constants.OTTER_HDFS_PREFIX + ds.getName() + "'";
+		sql += "LOCATION '" + config.getOtterHdfsPrefix() + ds.getName() + "'";
 		Connection c = getConnection();
 
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
-		getCount(Constants.DB_NAME + "." + ds.getName());
+		getCount(config.getImpalaDbName() + "." + ds.getName());
 	}
 
 	public void refreshTable(String name) throws SQLException {
 		Connection c = getConnection();
-		String sql = "ALTER TABLE " + Constants.DB_NAME + "." + name + " "
-				+ "SET LOCATION '" + Constants.OTTER_HDFS_PREFIX + name + "'";
+		String sql = "ALTER TABLE " + config.getImpalaDbName() + "." + name
+				+ " " + "SET LOCATION '" + config.getOtterHdfsPrefix() + name
+				+ "'";
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 	}
@@ -102,7 +118,7 @@ public class Impala {
 		try {
 			Connection c = getConnection();
 			PreparedStatement ps = c.prepareStatement("DROP TABLE "
-					+ Constants.DB_NAME + ".test1");
+					+ config.getImpalaDbName() + ".test1");
 			ps.execute();
 		} catch (SQLException sqle) {
 			if (sqle.getMessage().equalsIgnoreCase(
@@ -118,7 +134,8 @@ public class Impala {
 		Map map = new HashMap<>();
 		Connection c = getConnection();
 		List list = new ArrayList<List>();
-		PreparedStatement ps = c.prepareStatement("USE " + Constants.DB_NAME);
+		PreparedStatement ps = c.prepareStatement("USE "
+				+ config.getImpalaDbName());
 		ps.execute();
 		ps = c.prepareStatement(query);
 		ResultSet rs = ps.executeQuery();
@@ -144,11 +161,11 @@ public class Impala {
 		return map;
 	}
 
-	public List getSample(String tableName, int limit)
-			throws SQLException {
+	public List getSample(String tableName, int limit) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement("SELECT * FROM "
-				+ Constants.DB_NAME + "." + tableName + " LIMIT " + limit);
+				+ config.getImpalaDbName() + "." + tableName + " LIMIT "
+				+ limit);
 		ResultSet rs = ps.executeQuery();
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int colCnt = rsmd.getColumnCount();
