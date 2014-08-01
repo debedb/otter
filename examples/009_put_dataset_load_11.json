@@ -1,7 +1,6 @@
 # Loads data into dataset
 # PUT /dataset/load/<ID>
-{ 
-	[
-	 'location': 's3n://tq.s.adotube.com/oy/txns/txns1.dsv'
-	 ]
-}
+[{"path" : "/test1/test1000.dsv",
+ "location" : 1
+ }
+]

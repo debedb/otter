@@ -22,6 +22,16 @@ public class Query implements Serializable {
 
 	private String query;
 
+	private boolean save;
+	
+	public boolean isSave() {
+		return save;
+	}
+
+	public void setSave(boolean save) {
+		this.save = save;
+	}
+
 	public String getQuery() {
 		return query;
 	}

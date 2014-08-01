@@ -12,6 +12,10 @@ cdh.unix_user=hdfs
 # like Mahout).
 cdh.impala_only=0
 
+cdh.impala_db=mydb
+
+cdh.impala_external_tables=1
+
 mysql.host=mysql.myhost.com
 	
 mysql.user=root

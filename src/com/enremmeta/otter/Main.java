@@ -112,6 +112,7 @@ public class Main extends AbstractHandler {
 
 	private static void startServer() throws Exception {
 		Config config = Config.getInstance();
+		Logger.log("Port: " + config.getProperty(Config.PROP_OTTER_MGR_PORT));
 		int port = Integer
 				.parseInt(config.getProperty(Config.PROP_OTTER_MGR_PORT));
 
@@ -196,6 +197,7 @@ public class Main extends AbstractHandler {
 		config.load(configFile);
 		config.validate();
 		setUp();
+		System.out.println("0.9.1");
 		startServer();
 	}
 }

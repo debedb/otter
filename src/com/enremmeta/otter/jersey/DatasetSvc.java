@@ -110,7 +110,7 @@ public class DatasetSvc {
 					.getImpalaDbName() + "." + dsName);
 			for (LoadSource source : sources) {
 				int location = source.getLocation();
-				String delim  = source.getDelim();
+				String delim = source.getDelim();
 				String sourceType = config.getProperty("source." + location
 						+ ".type");
 				if (!sourceType.equalsIgnoreCase("s3")) {
@@ -205,11 +205,11 @@ public class DatasetSvc {
 		Dataset ds;
 		try {
 			ds = db.getDataset(id);
+			String dsName = ds.getName();
+			CdhConnection.getInstance().deleteDataset(dsName);
+			Impala.getInstance().refreshTable(dsName);
 		} catch (SQLException e) {
 			throw new OtterException(e);
 		}
-		String dsName = ds.getName();
-		CdhConnection.getInstance().deleteDataset(dsName);
-		Impala.getInstance().deleteDataset(dsName);
 	}
 }

@@ -66,17 +66,17 @@ public class Impala {
 		ps.execute();
 	}
 
-	public void deleteDataset(String name) throws OtterException {
-		try {
-			Connection c = getConnection();
-			String sql = "DELETE FROM " + config.getImpalaDbName() + "." + name;
-			PreparedStatement ps = c.prepareStatement(sql);
-			ps.execute();
-			refreshTable(name);
-		} catch (SQLException sqle) {
-			throw new OtterException(sqle);
-		}
-	}
+	// public void deleteDataset(String name) throws OtterException {
+	// try {
+	// Connection c = getConnection();
+	// String sql = "DELETE FROM " + config.getImpalaDbName() + "." + name;
+	// PreparedStatement ps = c.prepareStatement(sql);
+	// ps.execute();
+	// refreshTable(name);
+	// } catch (SQLException sqle) {
+	// throw new OtterException(sqle);
+	// }
+	// }
 
 	// TODO partitioning...
 	/**
@@ -114,20 +114,44 @@ public class Impala {
 		ps.execute();
 	}
 
-	public void testCleanup() throws OtterException {
+	public List<String> testCleanup() {
+		List<String> errors = new ArrayList<String>();
 		try {
+
 			Connection c = getConnection();
-			PreparedStatement ps = c.prepareStatement("DROP TABLE "
-					+ config.getImpalaDbName() + ".test1");
-			ps.execute();
-		} catch (SQLException sqle) {
-			if (sqle.getMessage().equalsIgnoreCase(
-					"AnalysisException: Table does not exist: x5.test1")) {
-				// Ignore
-			} else {
-				throw new OtterException(sqle);
+
+			PreparedStatement ps = c.prepareStatement("SHOW TABLES IN "
+					+ config.getImpalaDbName() + " LIKE 'test%'");
+			ResultSet rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+				System.out.println(rsmd.getColumnName(i));
 			}
+			while (rs.next()) {
+				try {
+					PreparedStatement ps2 = c.prepareStatement("DROP TABLE "
+
+					+ config.getImpalaDbName() + ".test1");
+					ps2.execute();
+					ps2.close();
+				} catch (SQLException sqle) {
+					if (sqle.getMessage().equalsIgnoreCase(
+							"AnalysisException: Table does not exist: ")) {
+						// Ignore
+					} else {
+						errors.add(sqle.getMessage());
+					}
+				}
+			}
+			ps.close();
+			rs.close();;
+		} catch (SQLException sqle2) {
+			errors.add(sqle2.getMessage());
 		}
+		if (errors.size() == 0) {
+			return null;
+		}
+		return errors;
 	}
 
 	public Map query(String query) throws SQLException {
@@ -163,9 +187,13 @@ public class Impala {
 
 	public List getSample(String tableName, int limit) throws SQLException {
 		Connection c = getConnection();
-		PreparedStatement ps = c.prepareStatement("SELECT * FROM "
-				+ config.getImpalaDbName() + "." + tableName + " LIMIT "
-				+ limit);
+		String sql = "SELECT * FROM " + config.getImpalaDbName() + "."
+				+ tableName;
+		if (limit > 0) {
+			sql += " LIMIT " + limit;
+		}
+
+		PreparedStatement ps = c.prepareStatement(sql);
 		ResultSet rs = ps.executeQuery();
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int colCnt = rsmd.getColumnCount();

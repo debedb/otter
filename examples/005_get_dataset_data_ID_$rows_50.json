@@ -1,3 +1,0 @@
-# Get data from dataset (as CSV), optionally limiting number of rows
-# GET /dataset/data/<ID>
-# No body.

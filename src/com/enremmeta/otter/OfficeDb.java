@@ -6,11 +6,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import com.enremmeta.otter.entity.Dataset;
 import com.enremmeta.otter.entity.DatasetColumn;
+import com.enremmeta.otter.entity.Task;
+import com.enremmeta.otter.entity.TaskDataSet;
+import com.enremmeta.otter.entity.TaskDataSetFilter;
+import com.enremmeta.otter.entity.TaskDataSetModifier;
+import com.enremmeta.otter.entity.TaskDataSetModifierSort;
+import com.enremmeta.otter.entity.TaskDataSetProperty;
 
 public class OfficeDb {
 
@@ -47,6 +54,225 @@ public class OfficeDb {
 		con = DriverManager.getConnection(url, connectionProps);
 		Logger.log("Connected to " + url + ".");
 		con.setAutoCommit(false);
+	}
+
+	private static final String TASK_FILTERS_SQL = "SELECT t.name TaskName, "
+			+ "tds.id TdsId,"
+			+ "tds.name TaskDataSetName, "
+			+ "tdsf.id TdsfId, "
+			+ "tdsf.connect_operator FilterOp, "
+			+ "tdsf.type FilterType, "
+			+ "tdsf.expression FilterExp, "
+			+ "tdsf.value FilterValue, "
+			+ "tdsf.is_parameter FilterIsParam, "
+			+ "tdsf.parameter_name FilterParamName, "
+			+ "tdsp.id TdspId, "
+			+ "tdsp.alias PropAlias, "
+			+ " up.title UniversalPropertyTitle, "
+			+ " up.name UniversalPropertyName, "
+			+ " up.type UniversalPropertyType, "
+			+ " up.type_enum_values UniversalPropertyEnumVals, "
+			+ " us.db_name "
+			+ "FROM task t "
+			+ "JOIN task_data_set tds ON t.id = tds.task_id "
+			+ "JOIN task_data_set_filter tdsf ON tdsf.task_data_set_id = tds.id "
+			+ "JOIN task_data_set_property tdsp  "
+			+ "ON tdsf.task_data_set_property_id = tdsp.id "
+			+ "JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
+			+ "JOIN universal_source us ON tdss.universal_source_id = us.id "
+			+ "JOIN task_data_set tds2 ON tdsp.task_data_set_id = tds2.id "
+			+ "JOIN universal_property up ON tdsp.universal_property_id = up.id "
+			+ "WHERE  t.id = ? ORDER BY tds.id, tdsf.id, tdsp.id, up.id, us.id";
+
+	private static final String TASK_MODIFIERS_SQL = "SELECT tds.id TdsId, tdsm.id TdsmId, tdsm.alias ModifierAlias, "
+			+ " tdsm.expression ModifierExpression, tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType "
+			+ " FROM task_data_set tds "
+			+ " JOIN task_data_set_modifier tdsm ON tdsm.task_data_set_id = tds.id "
+			+ " JOIN task_data_set_property tdsp "
+			+ " ON tdsm.task_data_set_property_id = tdsp.id "
+			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
+			+ " JOIN universal_source us ON tdss.universal_source_id = us.id "
+			+ " JOIN universal_property up ON tdsp.universal_property_id = up.id "
+			+ " WHERE "
+			+ " tds.task_id = ? ORDER BY tds.id, tdsm.id, up.id, us.id";
+
+	private static final String TASK_MODIFIERS_SORT_SQL = "SELECT tds.id TdsId, tdsms.id TdsmsId, "
+			+ " tdsms.direction Direction, "
+			+ " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType "
+			+ " FROM task_data_set tds "
+			+ " JOIN task_data_set_modifier_sort tdsms ON tdsms.task_data_set_id = tds.id "
+			+ " JOIN task_data_set_property tdsp "
+			+ " ON tdsm.task_data_set_property_id = tdsp.id "
+			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
+			+ " JOIN universal_source us ON tdss.universal_source_id = us.id "
+			+ " JOIN universal_property up ON tdsp.universal_property_id = up.id "
+			+ " WHERE "
+			+ " tds.task_id = ? ORDER BY tds.id, tdsm.id, up.id, us.id";
+
+	private void loadTaskModifiers(Task t, Map<Long, TaskDataSet> map)
+			throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+
+		long prevTdsId = -1;
+		long prevTdsmId = -1;
+		long prevTdspId = -1;
+
+		TaskDataSet tds = null;
+		TaskDataSetModifier tdsm = null;
+
+		while (rs.next()) {
+			int i = 1;
+
+			String taskName = rs.getString("TaskName");
+			t.setName(taskName);
+
+			long tdsId = rs.getLong("TdsId");
+
+			if (tdsId != prevTdsId) {
+				tds = new TaskDataSet(tdsId);
+				String tdsName = rs.getString("TaskDataSetName");
+				tds.setName(tdsName);
+				map.put(tdsId, tds);
+				prevTdsId = tdsId;
+			}
+
+			long tdsmId = rs.getLong("TdsmId");
+			if (tdsmId != prevTdsmId) {
+				tdsm = new TaskDataSetModifier(tdsmId);
+				tdsm.setAlias(rs.getString("ModifierAlias"));
+				tdsm.setExpression(rs.getString("ModifierExpression"));
+
+				tds.getModifiers().add(tdsm);
+
+				TaskDataSetProperty tdsp = loadProperty(rs);
+				tdsm.setProperty(tdsp);
+				// Ignore DB Name for now
+				prevTdsmId = tdsmId;
+			}
+		}
+	}
+
+	private void loadTaskModifiersSort(Task t, Map<Long, TaskDataSet> map)
+			throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_SORT_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+
+		long prevTdsId = -1;
+		long prevTdsmsId = -1;
+		long prevTdspId = -1;
+
+		TaskDataSet tds = null;
+		TaskDataSetModifierSort tdsms = null;
+
+		while (rs.next()) {
+			int i = 1;
+
+			String taskName = rs.getString("TaskName");
+			t.setName(taskName);
+
+			long tdsId = rs.getLong("TdsId");
+
+			if (tdsId != prevTdsId) {
+				tds = new TaskDataSet(tdsId);
+				String tdsName = rs.getString("TaskDataSetName");
+				tds.setName(tdsName);
+				map.put(tdsId, tds);
+				prevTdsId = tdsId;
+			}
+
+			long tdsmsId = rs.getLong("TdsmsId");
+			if (tdsmsId != prevTdsmsId) {
+				tdsms = new TaskDataSetModifierSort(tdsmsId);
+				tdsms.setDirection(rs.getString("Direction"));
+
+				tds.getSorts().add(tdsms);
+
+				TaskDataSetProperty tdsp = loadProperty(rs);
+				tdsms.setProperty(tdsp);
+				// Ignore DB Name for now
+				prevTdsmsId = tdsmsId;
+			}
+		}
+	}
+
+	private TaskDataSetProperty loadProperty(ResultSet rs) throws SQLException {
+		TaskDataSetProperty tdsp = new TaskDataSetProperty(rs.getLong("TdspId"));
+		tdsp.setAlias(rs.getString("PropAlias"));
+		tdsp.setUniversalName(rs.getString("UniversalPropertyName"));
+		tdsp.setUniversalTitle(rs.getString("UniversalPropertyTitle"));
+		tdsp.setUniversalType(rs.getString("UniversalPropertyType"));
+		return tdsp;
+	}
+
+	private void loadTaskFilters(Task t, Map<Long, TaskDataSet> map)
+			throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_FILTERS_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+
+		long prevTdsId = -1;
+		long prevTdsfId = -1;
+		long prevTdspId = -1;
+
+		TaskDataSet tds = null;
+		TaskDataSetFilter tdsf = null;
+
+		while (rs.next()) {
+			int i = 1;
+
+			String taskName = rs.getString("TaskName");
+			t.setName(taskName);
+
+			long tdsId = rs.getLong("TdsId");
+
+			if (tdsId != prevTdsId) {
+				tds = new TaskDataSet(tdsId);
+				String tdsName = rs.getString("TaskDataSetName");
+				tds.setName(tdsName);
+				map.put(tdsId, tds);
+				prevTdsId = tdsId;
+			}
+
+			long tdsfId = rs.getLong("TdsfId");
+			if (tdsfId != prevTdsfId) {
+				tdsf = new TaskDataSetFilter(tdsfId);
+				tdsf.setConnectOperator(rs.getString("FilterOp"));
+				tdsf.setType(rs.getString("FilterType"));
+				tdsf.setExpression(rs.getString("FilterExp"));
+				tdsf.setValue(rs.getString("FilterValue"));
+				tdsf.setParameter(rs.getBoolean("FilterIsParam"));
+				tdsf.setParameterName(rs.getString("FilterParamName"));
+				tds.getFilters().add(tdsf);
+
+				TaskDataSetProperty tdsp = loadProperty(rs);
+
+				tdsf.setTaskDataSetProperty(tdsp);
+
+				prevTdsfId = tdsfId;
+			}
+		}
+	}
+
+	public Task getTask(int id) throws OtterException {
+		Task t = new Task();
+		t.setId(id);
+		try {
+			final Map<Long, TaskDataSet> map = new HashMap<Long, TaskDataSet>();
+			loadTaskFilters(t, map);
+
+			return t;
+		} catch (SQLException sqle) {
+			throw new OtterException(sqle);
+		}
+
 	}
 
 	public int addDataset(Dataset ds) throws SQLException {
@@ -96,25 +322,25 @@ public class OfficeDb {
 	}
 
 	public int testCleanup() throws OtterException {
-//
-//		Connection c;
-//		try {
-//			c = getConnection();
-//		} catch (SQLException e) {
-//			throw new OtterException(e);
-//		}
-//		try {
-//			PreparedStatement ps = c
-//					.prepareStatement("DELETE FROM dataset WHERE title = 'test1'");
-//			int upd = ps.executeUpdate();
-//			ps.close();
-//			c.commit();
-//			return upd;
-//		} catch (SQLException sqle) {
-//			rollback();
-//			throw new OtterException(sqle);
-//		} finally {
-//		}
+		//
+		// Connection c;
+		// try {
+		// c = getConnection();
+		// } catch (SQLException e) {
+		// throw new OtterException(e);
+		// }
+		// try {
+		// PreparedStatement ps = c
+		// .prepareStatement("DELETE FROM dataset WHERE title = 'test1'");
+		// int upd = ps.executeUpdate();
+		// ps.close();
+		// c.commit();
+		// return upd;
+		// } catch (SQLException sqle) {
+		// rollback();
+		// throw new OtterException(sqle);
+		// } finally {
+		// }
 		return 0;
 	}
 
@@ -143,7 +369,7 @@ public class OfficeDb {
 			DatasetColumn col = new DatasetColumn();
 			col.setName(rs.getString(2));
 			col.setType(rs.getString(3));
-			//col.setFmt(rs.getString(4));
+			// col.setFmt(rs.getString(4));
 			retval.getColumns().add(col);
 		}
 		return retval;

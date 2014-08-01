@@ -242,14 +242,15 @@ public class CdhConnection {
 						+ ds.getName(), true);
 	}
 
-	public void testCleanup() throws OtterException {
+	public String testCleanup() {
 		try {
 			sudoCdhUser();
 			shellCommand("hadoop fs -rm -r -f hdfs:"
 					+ Config.getInstance().getOtterHdfsPrefix() + "test1", true);
 			popSudos();
+			return null;
 		} catch (Exception e) {
-			throw new OtterException(e);
+			return e.getMessage();
 		}
 	}
 

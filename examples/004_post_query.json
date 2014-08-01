@@ -1,5 +1,6 @@
 # Execute a query
 # POST /query/<ID>
 { 
-	"query" : "SELECT COUNT(TRN_ID), MIN(TRN_ID), MAX(TRN_ID) FROM test1"
+    "query" : "SELECT COUNT(trn_id), MIN(tdt_qty), MAX(tdt_qty), MEDIAN(tdt_qty), AVG(tdt_qty) FROM test1",
+    "save"  : true
 }

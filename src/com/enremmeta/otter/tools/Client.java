@@ -124,6 +124,10 @@ public class Client {
 		System.out.println("****** RESPONSE *******");
 		System.out.println(responseTxt);
 		System.out.println("**********************");
+		responseTxt = responseTxt.trim();
+		if (responseTxt.length() == 0) {
+			return null;
+		}
 		try {
 			resp = mapper.readValue(responseTxt, Map.class);
 		} catch (Exception e) {
@@ -160,6 +164,10 @@ public class Client {
 				System.err.println("Ignoring " + jsonFile);
 				continue;
 			}
+			Logger.log("----------------------------------------");
+			Logger.log("Processing "  + jsonFile);
+			Logger.log("----------------------------------------");
+			
 			try {
 				String filePrefix = jsonFile.split("_")[0];
 				Long.valueOf(filePrefix);

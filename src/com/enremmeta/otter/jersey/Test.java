@@ -1,9 +1,10 @@
 package com.enremmeta.otter.jersey;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -24,13 +25,23 @@ public class Test {
 		OfficeDb db = OfficeDb.getInstance();
 		CdhConnection cdhc = CdhConnection.getInstance();
 		Impala imp = Impala.getInstance();
-		Map<String, String> map = new HashMap<String, String>();
+		Map map = new HashMap();
 
 		int upd = db.testCleanup();
-		imp.testCleanup();
-		cdhc.testCleanup();
-		map.put("deleted_from_meta_db", "" + upd);
 		
+		List<String> errs = imp.testCleanup();
+		String err2 = cdhc.testCleanup();
+		if (err2 != null) {
+			if (errs == null) {
+				errs = new ArrayList<String>();
+			}
+			errs.add(err2);
+		} 
+		if (errs != null) {
+			map.put("errors", errs);
+		}
+		
+		map.put("deleted_from_meta_db", "" + upd);
 		return map;
 	}
 
