@@ -10,11 +10,11 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 @JsonRootName(value = "")
 
 public class TaskDataSetModifierGroup implements Serializable {
-	private TaskDataSetModifierGroup() {
+	public TaskDataSetModifierGroup() {
 		super();
 	}
 
-	private TaskDataSetModifierGroup(long id) {
+	public TaskDataSetModifierGroup(long id) {
 		super();
 		this.id = id;
 	}

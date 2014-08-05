@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -32,8 +33,13 @@ public class DatasetSvc {
 	@Path("/create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Map<String, Integer> create(Dataset ds) throws Exception {
-
+	public Map<String, Integer> create(Dataset ds) throws OtterException {
+		if (!Config.getInstance().getBooleanProperty("otter.manage_metadata")) {
+			throw new OtterException(
+					"Either set otter.manage_metadata to true, or use "
+							+ "GET /dataset/create/{id} method instead to "
+							+ "pull metadata from the DB");
+		}
 		Logger.log("Entered /dataset/create, thread " + Thread.currentThread());
 		OfficeDb db = OfficeDb.getInstance();
 		CdhConnection cdhc = CdhConnection.getInstance();
@@ -48,11 +54,9 @@ public class DatasetSvc {
 		try {
 			cdhc.addDataset(ds);
 			imp.addDataset(ds);
-			if (Config.getInstance()
-					.getBooleanProperty("otter.manage_metadata")) {
-				int id = db.addDataset(ds);
-				retval.put("id", id);
-			}
+			int id = db.addDataset(ds);
+			retval.put("id", id);
+
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
 		} catch (Exception e) {
@@ -62,10 +66,34 @@ public class DatasetSvc {
 	}
 
 	@GET
+	@Path("/create/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, Integer> create(@PathParam("id") int id)
+			throws OtterException {
+		Logger.log("Entered GET /dataset/create/" + id + ", thread "
+				+ Thread.currentThread());
+		OfficeDb db = OfficeDb.getInstance();
+		CdhConnection cdhc = CdhConnection.getInstance();
+		Impala imp = Impala.getInstance();
+
+		Map<String, Integer> retval = new HashMap<String, Integer>();
+		try {
+			OfficeDb odb = OfficeDb.getInstance();
+			Dataset ds = odb.getDataset(id);
+			cdhc.addDataset(ds);
+			imp.addDataset(ds);
+		} catch (Exception sqle) {
+			throw new OtterException(sqle);
+		}
+		return retval;
+	}
+
+	@GET
 	@Path("/data/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List getSample(@PathParam("id") int id, @QueryParam("rows") int rows)
 			throws OtterException {
+		@SuppressWarnings("rawtypes")
 		List list = new ArrayList();
 		try {
 			Impala imp = Impala.getInstance();

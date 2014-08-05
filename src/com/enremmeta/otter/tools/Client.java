@@ -150,6 +150,9 @@ public class Client {
 		if (a.length > 0) {
 			baseUrl = a[0];
 		}
+		if (a.length > 1) {
+			
+		}
 		String cwd = new File(".").getAbsolutePath();
 		jsonDir = new File(cwd, "examples");
 
@@ -170,7 +173,8 @@ public class Client {
 			
 			try {
 				String filePrefix = jsonFile.split("_")[0];
-				Long.valueOf(filePrefix);
+				Long testNum = Long.valueOf(filePrefix);
+				
 			} catch (NumberFormatException nfe) {
 				System.err.println("Ignoring file " + jsonFile);
 				continue;

@@ -20,7 +20,7 @@ public class TaskDataSetProperty implements Serializable {
 	
 	private String universalType;
 	
-	private String dbName;
+	private String tableName;
 	
 	public long getId() {
 		return id;
@@ -62,12 +62,12 @@ public class TaskDataSetProperty implements Serializable {
 		this.universalType = universalType;
 	}
 
-	public String getDbName() {
-		return dbName;
+	public String getTableName() {
+		return tableName;
 	}
 
-	public void setDbName(String dbName) {
-		this.dbName = dbName;
+	public void setTableName(String dbName) {
+		this.tableName = dbName;
 	}
 
 	public TaskDataSetProperty() {

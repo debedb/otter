@@ -1,5 +1,5 @@
-# Creates data set
-# PUT /dataset/create
+# Defines data set
+# PUT /dataset/define
 {  
   "name"    : "test1",
   "columns" : [ { "name" : "trn_id",

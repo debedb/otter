@@ -16,6 +16,7 @@ import com.enremmeta.otter.entity.Task;
 import com.enremmeta.otter.entity.TaskDataSet;
 import com.enremmeta.otter.entity.TaskDataSetFilter;
 import com.enremmeta.otter.entity.TaskDataSetModifier;
+import com.enremmeta.otter.entity.TaskDataSetModifierGroup;
 import com.enremmeta.otter.entity.TaskDataSetModifierSort;
 import com.enremmeta.otter.entity.TaskDataSetProperty;
 
@@ -72,7 +73,7 @@ public class OfficeDb {
 			+ " up.name UniversalPropertyName, "
 			+ " up.type UniversalPropertyType, "
 			+ " up.type_enum_values UniversalPropertyEnumVals, "
-			+ " us.db_name "
+			+ " us.db_name DbName "
 			+ "FROM task t "
 			+ "JOIN task_data_set tds ON t.id = tds.task_id "
 			+ "JOIN task_data_set_filter tdsf ON tdsf.task_data_set_id = tds.id "
@@ -84,9 +85,11 @@ public class OfficeDb {
 			+ "JOIN universal_property up ON tdsp.universal_property_id = up.id "
 			+ "WHERE  t.id = ? ORDER BY tds.id, tdsf.id, tdsp.id, up.id, us.id";
 
-	private static final String TASK_MODIFIERS_SQL = "SELECT tds.id TdsId, tdsm.id TdsmId, tdsm.alias ModifierAlias, "
-			+ " tdsm.expression ModifierExpression, tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-			+ " up.name UniversalPropertyName, up.type UniversalPropertyType "
+	private static final String TASK_MODIFIERS_SQL = "SELECT tds.id TdsId, tdsm.id TdsmId, "
+			+ "tds.name TaskDataSetName, "
+			+ "tdsm.alias ModifierAlias, "
+			+ " tdsm.expression ModifierExpression, tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
 			+ " FROM task_data_set tds "
 			+ " JOIN task_data_set_modifier tdsm ON tdsm.task_data_set_id = tds.id "
 			+ " JOIN task_data_set_property tdsp "
@@ -97,19 +100,35 @@ public class OfficeDb {
 			+ " WHERE "
 			+ " tds.task_id = ? ORDER BY tds.id, tdsm.id, up.id, us.id";
 
-	private static final String TASK_MODIFIERS_SORT_SQL = "SELECT tds.id TdsId, tdsms.id TdsmsId, "
-			+ " tdsms.direction Direction, "
+	private static final String TASK_MODIFIERS_SORT_SQL = "SELECT tds.id TdsId, "
+			+ "tds.name TaskDataSetName, "
+			+ " tdsms.id TdsmsId, "
+			+ " tdsms.direction Direction, tdsp.id TdspId, "
 			+ " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-			+ " up.name UniversalPropertyName, up.type UniversalPropertyType "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
 			+ " FROM task_data_set tds "
 			+ " JOIN task_data_set_modifier_sort tdsms ON tdsms.task_data_set_id = tds.id "
 			+ " JOIN task_data_set_property tdsp "
-			+ " ON tdsm.task_data_set_property_id = tdsp.id "
+			+ " ON tdsms.task_data_set_property_id = tdsp.id "
 			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
 			+ " JOIN universal_source us ON tdss.universal_source_id = us.id "
 			+ " JOIN universal_property up ON tdsp.universal_property_id = up.id "
 			+ " WHERE "
-			+ " tds.task_id = ? ORDER BY tds.id, tdsm.id, up.id, us.id";
+			+ " tds.task_id = ? ORDER BY tds.id, tdsms.id, up.id, us.id";
+
+	private static final String TASK_MODIFIERS_GROUP_SQL = "SELECT tds.id TdsId, tds.name TaskDataSetName, tdsmg.id TdsmgId, "
+			+ "tdsp.id TdspId, "
+			+ " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
+			+ " FROM task_data_set tds "
+			+ " JOIN task_data_set_modifier_group tdsmg ON tdsmg.task_data_set_id = tds.id "
+			+ " JOIN task_data_set_property tdsp "
+			+ " ON tdsmg.task_data_set_property_id = tdsp.id "
+			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
+			+ " JOIN universal_source us ON tdss.universal_source_id = us.id "
+			+ " JOIN universal_property up ON tdsp.universal_property_id = up.id "
+			+ " WHERE "
+			+ " tds.task_id = ? ORDER BY tds.id, tdsmg.id, up.id, us.id";
 
 	private void loadTaskModifiers(Task t, Map<Long, TaskDataSet> map)
 			throws SQLException {
@@ -128,16 +147,17 @@ public class OfficeDb {
 		while (rs.next()) {
 			int i = 1;
 
-			String taskName = rs.getString("TaskName");
-			t.setName(taskName);
-
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				tds = new TaskDataSet(tdsId);
+				// New dataset? Or already existed?
+				tds = map.get(tdsId);
+				if (tds == null) {
+					tds = new TaskDataSet(tdsId);
+					map.put(tdsId, tds);
+				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
-				map.put(tdsId, tds);
 				prevTdsId = tdsId;
 			}
 
@@ -173,17 +193,17 @@ public class OfficeDb {
 
 		while (rs.next()) {
 			int i = 1;
-
-			String taskName = rs.getString("TaskName");
-			t.setName(taskName);
-
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				tds = new TaskDataSet(tdsId);
+				// New dataset? Or already existed?
+				tds = map.get(tdsId);
+				if (tds == null) {
+					tds = new TaskDataSet(tdsId);
+					map.put(tdsId, tds);
+				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
-				map.put(tdsId, tds);
 				prevTdsId = tdsId;
 			}
 
@@ -202,12 +222,59 @@ public class OfficeDb {
 		}
 	}
 
+	private void loadTaskModifiersGroup(Task t, Map<Long, TaskDataSet> map)
+			throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_GROUP_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+
+		long prevTdsId = -1;
+		long prevTdsmgId = -1;
+		long prevTdspId = -1;
+
+		TaskDataSet tds = null;
+		TaskDataSetModifierGroup tdsmg = null;
+
+		while (rs.next()) {
+			int i = 1;
+
+			long tdsId = rs.getLong("TdsId");
+
+			if (tdsId != prevTdsId) {
+				// New dataset? Or already existed?
+				tds = map.get(tdsId);
+				if (tds == null) {
+					tds = new TaskDataSet(tdsId);
+					map.put(tdsId, tds);
+				}
+				String tdsName = rs.getString("TaskDataSetName");
+				tds.setName(tdsName);
+				prevTdsId = tdsId;
+			}
+
+
+			long tdsmgId = rs.getLong("TdsmgId");
+			if (tdsmgId != prevTdsmgId) {
+				tdsmg = new TaskDataSetModifierGroup(tdsmgId);
+
+				tds.getGroups().add(tdsmg);
+
+				TaskDataSetProperty tdsp = loadProperty(rs);
+				tdsmg.setProperty(tdsp);
+				// Ignore DB Name for now
+				prevTdsmgId = tdsmgId;
+			}
+		}
+	}
+
 	private TaskDataSetProperty loadProperty(ResultSet rs) throws SQLException {
 		TaskDataSetProperty tdsp = new TaskDataSetProperty(rs.getLong("TdspId"));
 		tdsp.setAlias(rs.getString("PropAlias"));
 		tdsp.setUniversalName(rs.getString("UniversalPropertyName"));
 		tdsp.setUniversalTitle(rs.getString("UniversalPropertyTitle"));
 		tdsp.setUniversalType(rs.getString("UniversalPropertyType"));
+		tdsp.setTableName(rs.getString("DbName"));
 		return tdsp;
 	}
 
@@ -222,9 +289,9 @@ public class OfficeDb {
 		long prevTdsfId = -1;
 		long prevTdspId = -1;
 
-		TaskDataSet tds = null;
 		TaskDataSetFilter tdsf = null;
 
+		TaskDataSet tds = null;
 		while (rs.next()) {
 			int i = 1;
 
@@ -234,12 +301,17 @@ public class OfficeDb {
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				tds = new TaskDataSet(tdsId);
+				// New dataset? Or already existed?
+				tds = map.get(tdsId);
+				if (tds == null) {
+					tds = new TaskDataSet(tdsId);
+					map.put(tdsId, tds);
+				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
-				map.put(tdsId, tds);
 				prevTdsId = tdsId;
 			}
+
 
 			long tdsfId = rs.getLong("TdsfId");
 			if (tdsfId != prevTdsfId) {
@@ -268,6 +340,13 @@ public class OfficeDb {
 			final Map<Long, TaskDataSet> map = new HashMap<Long, TaskDataSet>();
 			loadTaskFilters(t, map);
 
+			loadTaskModifiers(t, map);
+			loadTaskModifiersGroup(t, map);
+			loadTaskModifiersSort(t, map);
+			for (long tdsId : map.keySet()) {
+				TaskDataSet tds = map.get(tdsId);
+				t.getDatasets().add(tds);
+			}
 			return t;
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
@@ -356,7 +435,8 @@ public class OfficeDb {
 	public Dataset getDataset(int datasetId) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c
-				.prepareStatement("SELECT us.db_name, up.name, up.type FROM universal_source us JOIN universal_property up ON up.universal_source_id = us.id "
+				.prepareStatement("SELECT us.db_name, up.name, up.type FROM universal_source us "
+						+ "JOIN universal_property up ON up.universal_source_id = us.id "
 						+ "WHERE us.id = ?");
 		ps.setObject(1, datasetId);
 		ResultSet rs = ps.executeQuery();

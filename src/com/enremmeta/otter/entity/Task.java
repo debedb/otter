@@ -27,14 +27,6 @@ public class Task implements Serializable {
 
 	private TaskDataSet taskDataSet;
 
-	public TaskDataSet getTaskDataSet() {
-		return taskDataSet;
-	}
-
-	public void setTaskDataSet(TaskDataSet taskDataSet) {
-		this.taskDataSet = taskDataSet;
-	}
-
 	public long getId() {
 		return id;
 	}
@@ -52,5 +44,13 @@ public class Task implements Serializable {
 	}
 
 	private List<TaskDataSet> datasets = new ArrayList<TaskDataSet>();
+
+	public List<TaskDataSet> getDatasets() {
+		return datasets;
+	}
+
+	public void setDatasets(List<TaskDataSet> datasets) {
+		this.datasets = datasets;
+	}
 
 }

@@ -15,6 +15,13 @@ import org.apache.hive.jdbc.HiveDriver;
 
 import com.enremmeta.otter.entity.Dataset;
 import com.enremmeta.otter.entity.DatasetColumn;
+import com.enremmeta.otter.entity.Task;
+import com.enremmeta.otter.entity.TaskDataSet;
+import com.enremmeta.otter.entity.TaskDataSetFilter;
+import com.enremmeta.otter.entity.TaskDataSetModifier;
+import com.enremmeta.otter.entity.TaskDataSetModifierGroup;
+import com.enremmeta.otter.entity.TaskDataSetModifierSort;
+import com.enremmeta.otter.entity.TaskDataSetProperty;
 
 public class Impala {
 
@@ -41,6 +48,122 @@ public class Impala {
 		}
 		con = DriverManager.getConnection(url);
 		Logger.log("Connected to " + url + ".");
+	}
+
+	public String buildSql(Task task) throws OtterException {
+		String sql = "";
+		// TODO
+		// We assume one for now
+		TaskDataSet tds = task.getDatasets().get(0);
+		String tableName = "";
+
+		boolean firstFilter = false;
+		String whereClause = "";
+		String selectClause = "";
+
+		boolean haveModifiers = false;
+		for (TaskDataSetModifier modifier : tds.getModifiers()) {
+			haveModifiers = true;
+			String exp = modifier.getExpression();
+			String alias = modifier.getAlias();
+			TaskDataSetProperty tdsp = modifier.getProperty();
+			tableName = tdsp.getTableName();
+			if (selectClause.length() > 0) {
+				selectClause += ", ";
+			}
+			selectClause += exp + "(" + tdsp.getTableName() + "."
+					+ tdsp.getUniversalName() + ") " + alias;
+		}
+
+		if (!haveModifiers) {
+			selectClause = "*";
+		}
+
+		for (TaskDataSetFilter filter : tds.getFilters()) {
+			String filterType = filter.getType();
+			TaskDataSetProperty prop = filter.getTaskDataSetProperty();
+			tableName = prop.getTableName();
+
+			String operator = " = ";
+			String exp = filter.getExpression();
+			if (exp.equalsIgnoreCase("lt")) {
+				operator = " < ";
+			} else if (exp.equalsIgnoreCase("le")) {
+				operator = " <= ";
+			} else if (exp.equalsIgnoreCase("gt")) {
+				operator = " > ";
+			} else if (exp.equalsIgnoreCase("ge")) {
+				operator = " >= ";
+			} else if (exp.equalsIgnoreCase("eq")) {
+				operator = " = ";
+			} else if (exp.equalsIgnoreCase("ne")) {
+				operator = " <> ";
+			} else if (exp != null && !exp.equals("")) {
+				throw new OtterException("Invalid expression: " + exp);
+			}
+			if (whereClause.length() > 0) {
+				whereClause += " AND ";
+			}
+			String propName = prop.getUniversalName();
+			String propType = prop.getUniversalType();
+			String val = filter.getValue();
+			if (propType.equalsIgnoreCase("real")
+					|| propType.equalsIgnoreCase("float")
+					|| propType.equalsIgnoreCase("number")
+					|| propType.equalsIgnoreCase("double")) {
+				String noQuotes = val.replaceAll("\"", "");
+				try {
+					val = String.valueOf(Integer.parseInt(noQuotes));
+				} catch (NumberFormatException nfe) {
+					try {
+						val = String.valueOf(Double.parseDouble(noQuotes));
+					} catch (NumberFormatException nfe2) {
+						throw new OtterException("Cannot compare " + propName + " (" + propType + ") to value " + val);
+					}
+				}
+
+			}
+			whereClause += "(" + propName + " " + operator + " "
+					+ val + " ) ";
+		}
+
+		String groupByClause = "";
+		for (TaskDataSetModifierGroup group : tds.getGroups()) {
+			TaskDataSetProperty prop = group.getProperty();
+			tableName = prop.getTableName();
+			if (groupByClause.length() > 0) {
+				groupByClause += ", ";
+			}
+			groupByClause += tableName + "." + prop.getUniversalName();
+		}
+
+		String orderByClause = "";
+		for (TaskDataSetModifierSort sort : tds.getSorts()) {
+			TaskDataSetProperty prop = sort.getProperty();
+			String dir = sort.getDirection();
+			tableName = prop.getTableName();
+			if (orderByClause.length() > 0) {
+				orderByClause += ", ";
+			}
+			orderByClause += tableName + "." + prop.getUniversalName() + " "
+					+ dir;
+		}
+
+		sql = "SELECT " + selectClause + " FROM " + tableName;
+		if (whereClause.length() > 0) {
+			sql += " WHERE " + whereClause;
+		}
+
+		if (groupByClause.length() > 0) {
+			sql += " GROUP BY " + groupByClause;
+		}
+
+		if (orderByClause.length() > 0) {
+			sql += " ORDER BY " + orderByClause;
+		}
+
+		return sql;
+
 	}
 
 	private Impala() {
@@ -78,6 +201,21 @@ public class Impala {
 	// }
 	// }
 
+	/**
+	 * Make the type work as Impala type
+	 */
+
+	private static String fixType(String type) {
+		String retval = type;
+		if (type.equals("varchar")) {
+			retval = "string";
+		} else if (type.equals("datetime")) {
+			retval = "timestamp";
+		}
+		Logger.log("Replaced " + type + " with " + retval);
+		return retval;
+	}
+
 	// TODO partitioning...
 	/**
 	 * Creates a new table in Impala
@@ -91,7 +229,9 @@ public class Impala {
 			if (colClause.length() > 0) {
 				colClause += ", ";
 			}
-			colClause += col.getName() + " " + col.getType();
+			String type = col.getType().toLowerCase();
+			type = fixType(type);
+			colClause += col.getName() + " " + type;
 		}
 		sql += colClause + ") ";
 		// TODO!!!
@@ -120,20 +260,28 @@ public class Impala {
 
 			Connection c = getConnection();
 
-			PreparedStatement ps = c.prepareStatement("SHOW TABLES IN "
-					+ config.getImpalaDbName() + " LIKE 'test%'");
+			String dbName = config.getImpalaDbName();
+			PreparedStatement ps0 = c.prepareStatement("USE " + dbName);
+			ps0.execute();
+
+			String sql = "SHOW TABLES";
+			PreparedStatement ps = c.prepareStatement(sql);
 			ResultSet rs = ps.executeQuery();
 			ResultSetMetaData rsmd = rs.getMetaData();
-			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-				System.out.println(rsmd.getColumnName(i));
-			}
+			// for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+			// // System.out.println(rsmd.getColumnName(i));
+			// }
 			while (rs.next()) {
 				try {
-					PreparedStatement ps2 = c.prepareStatement("DROP TABLE "
-
-					+ config.getImpalaDbName() + ".test1");
-					ps2.execute();
-					ps2.close();
+					String tableName = rs.getString("name");
+					if (tableName.toLowerCase().startsWith("test")) {
+						String sqlDrop = "DROP TABLE "
+								+ config.getImpalaDbName() + "." + tableName;
+						Logger.log(sqlDrop);
+						PreparedStatement ps2 = c.prepareStatement(sqlDrop);
+						ps2.execute();
+						ps2.close();
+					}
 				} catch (SQLException sqle) {
 					if (sqle.getMessage().equalsIgnoreCase(
 							"AnalysisException: Table does not exist: ")) {
@@ -144,7 +292,8 @@ public class Impala {
 				}
 			}
 			ps.close();
-			rs.close();;
+			rs.close();
+			;
 		} catch (SQLException sqle2) {
 			errors.add(sqle2.getMessage());
 		}
@@ -185,6 +334,7 @@ public class Impala {
 		return map;
 	}
 
+	@SuppressWarnings("unchecked")
 	public List getSample(String tableName, int limit) throws SQLException {
 		Connection c = getConnection();
 		String sql = "SELECT * FROM " + config.getImpalaDbName() + "."
