@@ -42,12 +42,19 @@ public class TaskDataSet implements Serializable {
 	}
 
 	private List<TaskDataSetFilter> filters = new ArrayList<TaskDataSetFilter>();
-
 	private List<TaskDataSetModifier> modifiers = new ArrayList<TaskDataSetModifier>();
 	private List<TaskDataSetModifierGroup> groups = new ArrayList<TaskDataSetModifierGroup>();
 	private List<TaskDataSetModifierSort> sorts = new ArrayList<TaskDataSetModifierSort>();
+	private List<TaskDataSetProperty> fields = new ArrayList<TaskDataSetProperty>();
 	
-	
+	public List<TaskDataSetProperty> getFields() {
+		return fields;
+	}
+
+	public void setFields(List<TaskDataSetProperty> fields) {
+		this.fields = fields;
+	}
+
 	public List<TaskDataSetModifier> getModifiers() {
 		return modifiers;
 	}

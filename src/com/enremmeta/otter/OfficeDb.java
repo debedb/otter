@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.enremmeta.otter.entity.Algorithm;
 import com.enremmeta.otter.entity.Dataset;
 import com.enremmeta.otter.entity.DatasetColumn;
 import com.enremmeta.otter.entity.Task;
@@ -130,8 +131,23 @@ public class OfficeDb {
 			+ " WHERE "
 			+ " tds.task_id = ? ORDER BY tds.id, tdsmg.id, up.id, us.id";
 
-	private void loadTaskModifiers(Task t, Map<Long, TaskDataSet> map)
-			throws SQLException {
+	private static final String TASK_ALGORITHM_SQL = "SELECT a.id AlgId, a.name AlgName,  a.process AlgProcess, a.fields AlgFields "
+			+ " FROM algorithm a "
+			+ " JOIN task_algorithm ta ON a.id = ta.algorithm_id"
+			+ " JOIN task t ON t.id = ta.task_id " + " WHERE t.id = ?";
+
+	private static final String TASK_DATASET_SQL = "SELECT  t.name TaskName, tds.id TdsId, tds.name TaskDataSetName, "
+			+ " tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle,  "
+			+ " up.name UniversalPropertyName,  up.type UniversalPropertyType,  "
+			+ " up.type_enum_values UniversalPropertyEnumVals, us.db_name DbName "
+			+ " FROM task t JOIN task_data_set tds ON t.id = tds.task_id "
+			+ " JOIN task_data_set_property tdsp  ON tds.id = tdsp.task_data_set_id "
+			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
+			+ " JOIN universal_source us ON tdss.universal_source_id = us.id "
+			+ " JOIN universal_property up ON tdsp.universal_property_id = up.id "
+			+ " WHERE  t.id = ? " + " ORDER BY tds.id, tdsp.id, up.id, us.id";
+
+	private void loadTaskModifiers(Task t) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_SQL);
 		ps.setLong(1, t.getId());
@@ -150,11 +166,10 @@ public class OfficeDb {
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				// New dataset? Or already existed?
-				tds = map.get(tdsId);
+				tds = t.getDatasets().get(tdsId);
 				if (tds == null) {
-					tds = new TaskDataSet(tdsId);
-					map.put(tdsId, tds);
+					throw new RuntimeException("Dataset " + tdsId
+							+ " not found!");
 				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
@@ -177,8 +192,52 @@ public class OfficeDb {
 		}
 	}
 
-	private void loadTaskModifiersSort(Task t, Map<Long, TaskDataSet> map)
-			throws SQLException {
+	private void loadTaskAlgorithm(Task t) throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_ALGORITHM_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+		// TODO many to many
+		if (rs.next()) {
+			Algorithm alg = new Algorithm();
+			alg.setId(rs.getLong("AlgId"));
+			alg.setName(rs.getString("AlgName"));
+
+			alg.setProcess(rs.getString("AlgProcess"));
+		}
+
+	}
+
+	private void loadTaskDataSets(Task t) throws SQLException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement(TASK_DATASET_SQL);
+		ps.setLong(1, t.getId());
+		ResultSet rs = ps.executeQuery();
+
+		long prevTdsId = -1;
+
+		TaskDataSet tds = null;
+		TaskDataSetModifierSort tdsms = null;
+
+		while (rs.next()) {
+			int i = 1;
+			long tdsId = rs.getLong("TdsId");
+
+			if (tdsId != prevTdsId) {
+				// New dataset? Or already existed?
+				tds = new TaskDataSet(tdsId);
+				String tdsName = rs.getString("TaskDataSetName");
+				tds.setName(tdsName);
+				t.getDatasets().put(tdsId, tds);
+				prevTdsId = tdsId;
+			}
+			long tdspId = rs.getLong("TdspId");
+			TaskDataSetProperty tdsp = loadProperty(rs);
+			tds.getFields().add(tdsp);
+		}
+	}
+
+	private void loadTaskModifiersSort(Task t) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_SORT_SQL);
 		ps.setLong(1, t.getId());
@@ -196,11 +255,10 @@ public class OfficeDb {
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				// New dataset? Or already existed?
-				tds = map.get(tdsId);
+				tds = t.getDatasets().get(tdsId);
 				if (tds == null) {
-					tds = new TaskDataSet(tdsId);
-					map.put(tdsId, tds);
+					throw new RuntimeException("Dataset " + tdsId
+							+ " not found!");
 				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
@@ -222,8 +280,7 @@ public class OfficeDb {
 		}
 	}
 
-	private void loadTaskModifiersGroup(Task t, Map<Long, TaskDataSet> map)
-			throws SQLException {
+	private void loadTaskModifiersGroup(Task t) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement(TASK_MODIFIERS_GROUP_SQL);
 		ps.setLong(1, t.getId());
@@ -242,17 +299,15 @@ public class OfficeDb {
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				// New dataset? Or already existed?
-				tds = map.get(tdsId);
+				tds = t.getDatasets().get(tdsId);
 				if (tds == null) {
-					tds = new TaskDataSet(tdsId);
-					map.put(tdsId, tds);
+					throw new RuntimeException("Dataset " + tdsId
+							+ " not found!");
 				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
 				prevTdsId = tdsId;
 			}
-
 
 			long tdsmgId = rs.getLong("TdsmgId");
 			if (tdsmgId != prevTdsmgId) {
@@ -278,8 +333,7 @@ public class OfficeDb {
 		return tdsp;
 	}
 
-	private void loadTaskFilters(Task t, Map<Long, TaskDataSet> map)
-			throws SQLException {
+	private void loadTaskFilters(Task t) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c.prepareStatement(TASK_FILTERS_SQL);
 		ps.setLong(1, t.getId());
@@ -301,17 +355,15 @@ public class OfficeDb {
 			long tdsId = rs.getLong("TdsId");
 
 			if (tdsId != prevTdsId) {
-				// New dataset? Or already existed?
-				tds = map.get(tdsId);
+				tds = t.getDatasets().get(tdsId);
 				if (tds == null) {
-					tds = new TaskDataSet(tdsId);
-					map.put(tdsId, tds);
+					throw new RuntimeException("Dataset " + tdsId
+							+ " not found!");
 				}
 				String tdsName = rs.getString("TaskDataSetName");
 				tds.setName(tdsName);
 				prevTdsId = tdsId;
 			}
-
 
 			long tdsfId = rs.getLong("TdsfId");
 			if (tdsfId != prevTdsfId) {
@@ -337,16 +389,14 @@ public class OfficeDb {
 		Task t = new Task();
 		t.setId(id);
 		try {
+			loadTaskAlgorithm(t);
+			loadTaskDataSets(t);
 			final Map<Long, TaskDataSet> map = new HashMap<Long, TaskDataSet>();
-			loadTaskFilters(t, map);
+			loadTaskFilters(t);
+			loadTaskModifiers(t);
+			loadTaskModifiersGroup(t);
+			loadTaskModifiersSort(t);
 
-			loadTaskModifiers(t, map);
-			loadTaskModifiersGroup(t, map);
-			loadTaskModifiersSort(t, map);
-			for (long tdsId : map.keySet()) {
-				TaskDataSet tds = map.get(tdsId);
-				t.getDatasets().add(tds);
-			}
 			return t;
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);

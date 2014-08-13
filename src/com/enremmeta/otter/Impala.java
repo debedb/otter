@@ -50,120 +50,130 @@ public class Impala {
 		Logger.log("Connected to " + url + ".");
 	}
 
-	public String buildSql(Task task) throws OtterException {
-		String sql = "";
-		// TODO
-		// We assume one for now
-		TaskDataSet tds = task.getDatasets().get(0);
-		String tableName = "";
+	public List<String> buildPrepSql(Task task) throws OtterException {
+		List<String> retval = new ArrayList<String>();
+		for (Long tdsId : task.getDatasets().keySet()) {
+			String sql = "";
+			TaskDataSet tds = task.getDatasets().get(tdsId);
+			String tableName = "";
 
-		boolean firstFilter = false;
-		String whereClause = "";
-		String selectClause = "";
+			boolean firstFilter = false;
+			String whereClause = "";
+			String selectClause = "";
 
-		boolean haveModifiers = false;
-		for (TaskDataSetModifier modifier : tds.getModifiers()) {
-			haveModifiers = true;
-			String exp = modifier.getExpression();
-			String alias = modifier.getAlias();
-			TaskDataSetProperty tdsp = modifier.getProperty();
-			tableName = tdsp.getTableName();
-			if (selectClause.length() > 0) {
-				selectClause += ", ";
-			}
-			selectClause += exp + "(" + tdsp.getTableName() + "."
-					+ tdsp.getUniversalName() + ") " + alias;
-		}
-
-		if (!haveModifiers) {
-			selectClause = "*";
-		}
-
-		for (TaskDataSetFilter filter : tds.getFilters()) {
-			String filterType = filter.getType();
-			TaskDataSetProperty prop = filter.getTaskDataSetProperty();
-			tableName = prop.getTableName();
-
-			String operator = " = ";
-			String exp = filter.getExpression();
-			if (exp.equalsIgnoreCase("lt")) {
-				operator = " < ";
-			} else if (exp.equalsIgnoreCase("le")) {
-				operator = " <= ";
-			} else if (exp.equalsIgnoreCase("gt")) {
-				operator = " > ";
-			} else if (exp.equalsIgnoreCase("ge")) {
-				operator = " >= ";
-			} else if (exp.equalsIgnoreCase("eq")) {
-				operator = " = ";
-			} else if (exp.equalsIgnoreCase("ne")) {
-				operator = " <> ";
-			} else if (exp != null && !exp.equals("")) {
-				throw new OtterException("Invalid expression: " + exp);
-			}
-			if (whereClause.length() > 0) {
-				whereClause += " AND ";
-			}
-			String propName = prop.getUniversalName();
-			String propType = prop.getUniversalType();
-			String val = filter.getValue();
-			if (propType.equalsIgnoreCase("real")
-					|| propType.equalsIgnoreCase("float")
-					|| propType.equalsIgnoreCase("number")
-					|| propType.equalsIgnoreCase("double")) {
-				String noQuotes = val.replaceAll("\"", "");
-				try {
-					val = String.valueOf(Integer.parseInt(noQuotes));
-				} catch (NumberFormatException nfe) {
-					try {
-						val = String.valueOf(Double.parseDouble(noQuotes));
-					} catch (NumberFormatException nfe2) {
-						throw new OtterException("Cannot compare " + propName + " (" + propType + ") to value " + val);
+			List<TaskDataSetModifier> modifiers = tds.getModifiers();
+			if (modifiers.size() > 0) {
+				for (TaskDataSetModifier modifier : modifiers) {
+					String exp = modifier.getExpression();
+					String alias = modifier.getAlias();
+					TaskDataSetProperty tdsp = modifier.getProperty();
+					tableName = tdsp.getTableName();
+					if (selectClause.length() > 0) {
+						selectClause += ", ";
 					}
+					selectClause += exp + "(" + tdsp.getTableName() + "."
+							+ tdsp.getUniversalName() + ") " + alias;
 				}
+			} else {
+				for (TaskDataSetProperty field: tds.getFields()) {
+					if (selectClause.length() > 0) {
+						selectClause += ", ";
+					}
 
+					selectClause +=  field.getTableName() + "."
+							+ field.getUniversalName() ;
+				}
 			}
-			whereClause += "(" + propName + " " + operator + " "
-					+ val + " ) ";
-		}
 
-		String groupByClause = "";
-		for (TaskDataSetModifierGroup group : tds.getGroups()) {
-			TaskDataSetProperty prop = group.getProperty();
-			tableName = prop.getTableName();
+			String fromClause = "";
+
+			for (TaskDataSetFilter filter : tds.getFilters()) {
+				String filterType = filter.getType();
+				TaskDataSetProperty prop = filter.getTaskDataSetProperty();
+				tableName = prop.getTableName();
+
+				String operator = " = ";
+				String exp = filter.getExpression();
+				if (exp.equalsIgnoreCase("lt")) {
+					operator = " < ";
+				} else if (exp.equalsIgnoreCase("le")) {
+					operator = " <= ";
+				} else if (exp.equalsIgnoreCase("gt")) {
+					operator = " > ";
+				} else if (exp.equalsIgnoreCase("ge")) {
+					operator = " >= ";
+				} else if (exp.equalsIgnoreCase("eq")) {
+					operator = " = ";
+				} else if (exp.equalsIgnoreCase("ne")) {
+					operator = " <> ";
+				} else if (exp != null && !exp.equals("")) {
+					throw new OtterException("Invalid expression: " + exp);
+				}
+				if (whereClause.length() > 0) {
+					whereClause += " AND ";
+				}
+				String propName = prop.getUniversalName();
+				String propType = prop.getUniversalType();
+				String val = filter.getValue();
+				if (propType.equalsIgnoreCase("real")
+						|| propType.equalsIgnoreCase("float")
+						|| propType.equalsIgnoreCase("number")
+						|| propType.equalsIgnoreCase("double")) {
+					String noQuotes = val.replaceAll("\"", "");
+					try {
+						val = String.valueOf(Integer.parseInt(noQuotes));
+					} catch (NumberFormatException nfe) {
+						try {
+							val = String.valueOf(Double.parseDouble(noQuotes));
+						} catch (NumberFormatException nfe2) {
+							throw new OtterException("Cannot compare "
+									+ propName + " (" + propType
+									+ ") to value " + val);
+						}
+					}
+
+				}
+				whereClause += "(" + propName + " " + operator + " " + val
+						+ " ) ";
+			}
+
+			String groupByClause = "";
+			for (TaskDataSetModifierGroup group : tds.getGroups()) {
+				TaskDataSetProperty prop = group.getProperty();
+				tableName = prop.getTableName();
+				if (groupByClause.length() > 0) {
+					groupByClause += ", ";
+				}
+				groupByClause += tableName + "." + prop.getUniversalName();
+			}
+
+			String orderByClause = "";
+			for (TaskDataSetModifierSort sort : tds.getSorts()) {
+				TaskDataSetProperty prop = sort.getProperty();
+				String dir = sort.getDirection();
+				tableName = prop.getTableName();
+				if (orderByClause.length() > 0) {
+					orderByClause += ", ";
+				}
+				orderByClause += tableName + "." + prop.getUniversalName()
+						+ " " + dir;
+			}
+
+			sql = "SELECT " + selectClause + " FROM " + fromClause;
+			if (whereClause.length() > 0) {
+				sql += " WHERE " + whereClause;
+			}
+
 			if (groupByClause.length() > 0) {
-				groupByClause += ", ";
+				sql += " GROUP BY " + groupByClause;
 			}
-			groupByClause += tableName + "." + prop.getUniversalName();
-		}
 
-		String orderByClause = "";
-		for (TaskDataSetModifierSort sort : tds.getSorts()) {
-			TaskDataSetProperty prop = sort.getProperty();
-			String dir = sort.getDirection();
-			tableName = prop.getTableName();
 			if (orderByClause.length() > 0) {
-				orderByClause += ", ";
+				sql += " ORDER BY " + orderByClause;
 			}
-			orderByClause += tableName + "." + prop.getUniversalName() + " "
-					+ dir;
+			retval.add(sql);
 		}
-
-		sql = "SELECT " + selectClause + " FROM " + tableName;
-		if (whereClause.length() > 0) {
-			sql += " WHERE " + whereClause;
-		}
-
-		if (groupByClause.length() > 0) {
-			sql += " GROUP BY " + groupByClause;
-		}
-
-		if (orderByClause.length() > 0) {
-			sql += " ORDER BY " + orderByClause;
-		}
-
-		return sql;
-
+		return retval;
 	}
 
 	private Impala() {
@@ -304,12 +314,19 @@ public class Impala {
 	}
 
 	public Map query(String query) throws SQLException {
+		return query(query, false);
+	}
+
+	public Map query(String query, boolean metadataOnly) throws SQLException {
 		Map map = new HashMap<>();
 		Connection c = getConnection();
 		List list = new ArrayList<List>();
 		PreparedStatement ps = c.prepareStatement("USE "
 				+ config.getImpalaDbName());
 		ps.execute();
+		if (metadataOnly) {
+			query = "SELECT * FROM (" + query + " ) LIMIT 0";
+		}
 		ps = c.prepareStatement(query);
 		ResultSet rs = ps.executeQuery();
 		java.sql.ResultSetMetaData rsmd = rs.getMetaData();

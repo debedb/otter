@@ -1,8 +1,8 @@
 package com.enremmeta.otter.entity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -25,8 +25,6 @@ public class Task implements Serializable {
 
 	private String name;
 
-	private TaskDataSet taskDataSet;
-
 	public long getId() {
 		return id;
 	}
@@ -43,14 +41,23 @@ public class Task implements Serializable {
 		this.name = name;
 	}
 
-	private List<TaskDataSet> datasets = new ArrayList<TaskDataSet>();
+	private Map<Long, TaskDataSet> datasets = new HashMap<Long, TaskDataSet>();
 
-	public List<TaskDataSet> getDatasets() {
+	public Map<Long, TaskDataSet> getDatasets() {
 		return datasets;
 	}
 
-	public void setDatasets(List<TaskDataSet> datasets) {
+	public void setDatasets(Map<Long, TaskDataSet> datasets) {
 		this.datasets = datasets;
 	}
 
+	private Algorithm algorithm;
+
+	public Algorithm getAlgorithm() {
+		return algorithm;
+	}
+
+	public void setAlgorithm(Algorithm algorithm) {
+		this.algorithm = algorithm;
+	}
 }

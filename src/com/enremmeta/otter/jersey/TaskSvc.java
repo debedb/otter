@@ -33,6 +33,7 @@ public class TaskSvc {
 			String sql = impala.buildSql(task);
 			Map retval = new HashMap();
 			retval.put("sql", sql);
+			
 			Map rs = impala.query(sql);
 			retval.put("result_set", rs);
 			return retval;
