@@ -25,29 +25,58 @@ import com.enremmeta.otter.entity.TaskDataSetProperty;
 
 public class Impala {
 
-	private Connection con;
+	/**
+	 * Make the type work as Impala type
+	 */
 
-	private Connection getConnection() throws SQLException {
-		if (con == null || con.isClosed()) {
-			connect();
+	private static String fixType(String type) {
+		String retval = type;
+		if (type.equals("varchar")) {
+			retval = "string";
+		} else if (type.equals("datetime")) {
+			retval = "timestamp";
 		}
-		return con;
+		Logger.log("Replaced " + type + " with " + retval);
+		return retval;
 	}
 
-	public void connect() throws SQLException {
-		Config config = Config.getInstance();
-		String impalaHost = config.getProperty(Config.PROP_CDH_HOST);
-		String url = "jdbc:hive2://" + impalaHost + ":21050/;auth=noSasl";
-		Logger.log("Connecting to " + url + "...");
-		Class klass0 = HiveDriver.class;
-		Class klass = klass0;
-		try {
-			klass = Class.forName("org.apache.hive.jdbc.HiveDriver");
-		} catch (ClassNotFoundException cnfe) {
-			//
+	private Connection con;
+
+	private Config config;
+
+
+	public Impala() {
+		super();
+		config = Config.getInstance();
+	}
+
+	// TODO partitioning...
+	/**
+	 * Creates a new table in Impala
+	 */
+	public void addDataset(Dataset ds) throws SQLException,
+			ClassNotFoundException {
+		String sql = "CREATE EXTERNAL TABLE " + config.getImpalaDbName() + "."
+				+ ds.getName() + " ( ";
+		String colClause = "";
+		for (DatasetColumn col : ds.getColumns()) {
+			if (colClause.length() > 0) {
+				colClause += ", ";
+			}
+			String type = col.getType().toLowerCase();
+			type = fixType(type);
+			colClause += col.getName() + " " + type;
 		}
-		con = DriverManager.getConnection(url);
-		Logger.log("Connected to " + url + ".");
+		sql += colClause + ") ";
+		// TODO!!!
+		sql += "ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' ";
+		sql += "STORED AS TEXTFILE ";
+		sql += "LOCATION '" + config.getOtterHdfsPrefix() + ds.getName() + "'";
+		Connection c = getConnection();
+
+		PreparedStatement ps = c.prepareStatement(sql);
+		ps.execute();
+		getCount(config.getImpalaDbName() + "." + ds.getName());
 	}
 
 	public List<String> buildPrepSql(Task task) throws OtterException {
@@ -176,27 +205,20 @@ public class Impala {
 		return retval;
 	}
 
-	private Impala() {
-		super();
-		config = Config.getInstance();
-	}
-
-	private Config config;
-
-	private static Impala impala = new Impala();
-
-	public static Impala getInstance() {
-		return impala;
-	}
-
-	public void createDb(String name) throws SQLException, OtterException,
-			ClassNotFoundException {
-		Connection c = getConnection();
-		if (!name.matches("[A-Za-z][A-Za-z0-9]+")) {
-			throw new OtterException("Name not allowed: " + name);
+	public void connect() throws SQLException {
+		Config config = Config.getInstance();
+		String impalaHost = config.getProperty(Config.PROP_CDH_HOST);
+		String url = "jdbc:hive2://" + impalaHost + ":21050/;auth=noSasl";
+		Logger.log("Connecting to " + url + "...");
+		Class klass0 = HiveDriver.class;
+		Class klass = klass0;
+		try {
+			klass = Class.forName("org.apache.hive.jdbc.HiveDriver");
+		} catch (ClassNotFoundException cnfe) {
+			//
 		}
-		PreparedStatement ps = c.prepareStatement("CREATE DATABASE " + name);
-		ps.execute();
+		con = DriverManager.getConnection(url);
+		Logger.log("Connected to " + url + ".");
 	}
 
 	// public void deleteDataset(String name) throws OtterException {
@@ -211,48 +233,97 @@ public class Impala {
 	// }
 	// }
 
-	/**
-	 * Make the type work as Impala type
-	 */
-
-	private static String fixType(String type) {
-		String retval = type;
-		if (type.equals("varchar")) {
-			retval = "string";
-		} else if (type.equals("datetime")) {
-			retval = "timestamp";
+	public void createDb(String name) throws SQLException, OtterException,
+			ClassNotFoundException {
+		Connection c = getConnection();
+		if (!name.matches("[A-Za-z][A-Za-z0-9]+")) {
+			throw new OtterException("Name not allowed: " + name);
 		}
-		Logger.log("Replaced " + type + " with " + retval);
+		PreparedStatement ps = c.prepareStatement("CREATE DATABASE " + name);
+		ps.execute();
+	}
+
+	private Connection getConnection() throws SQLException {
+		if (con == null || con.isClosed()) {
+			connect();
+		}
+		return con;
+	}
+
+	public long getCount(String dsName) throws SQLException,
+			ClassNotFoundException {
+		Connection c = getConnection();
+		PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM "
+				+ dsName);
+		ResultSet rs = ps.executeQuery();
+		long retval = -1;
+		if (rs.next()) {
+			retval = (long) rs.getObject(1);
+			// Logger.log(dsName + " currently has " + +retval + " rows");
+		}
 		return retval;
 	}
 
-	// TODO partitioning...
-	/**
-	 * Creates a new table in Impala
-	 */
-	public void addDataset(Dataset ds) throws SQLException,
-			ClassNotFoundException {
-		String sql = "CREATE EXTERNAL TABLE " + config.getImpalaDbName() + "."
-				+ ds.getName() + " ( ";
-		String colClause = "";
-		for (DatasetColumn col : ds.getColumns()) {
-			if (colClause.length() > 0) {
-				colClause += ", ";
-			}
-			String type = col.getType().toLowerCase();
-			type = fixType(type);
-			colClause += col.getName() + " " + type;
-		}
-		sql += colClause + ") ";
-		// TODO!!!
-		sql += "ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' ";
-		sql += "STORED AS TEXTFILE ";
-		sql += "LOCATION '" + config.getOtterHdfsPrefix() + ds.getName() + "'";
+	@SuppressWarnings("unchecked")
+	public List getSample(String tableName, int limit) throws SQLException {
 		Connection c = getConnection();
+		String sql = "SELECT * FROM " + config.getImpalaDbName() + "."
+				+ tableName;
+		if (limit > 0) {
+			sql += " LIMIT " + limit;
+		}
 
 		PreparedStatement ps = c.prepareStatement(sql);
+		ResultSet rs = ps.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int colCnt = rsmd.getColumnCount();
+		List retval = new ArrayList();
+		while (rs.next()) {
+			List row = new ArrayList();
+			for (int i = 1; i < colCnt; i++) {
+				row.add(rs.getObject(i));
+			}
+			retval.add(row);
+		}
+		return retval;
+	}
+
+	public Map query(String query) throws SQLException {
+		return query(query, false);
+	}
+
+	public Map query(String query, boolean metadataOnly) throws SQLException {
+		Map map = new HashMap<>();
+		Connection c = getConnection();
+		List list = new ArrayList<List>();
+		PreparedStatement ps = c.prepareStatement("USE "
+				+ config.getImpalaDbName());
 		ps.execute();
-		getCount(config.getImpalaDbName() + "." + ds.getName());
+		if (metadataOnly) {
+			query = "SELECT * FROM (" + query + " ) LIMIT 0";
+		}
+		ps = c.prepareStatement(query);
+		ResultSet rs = ps.executeQuery();
+		java.sql.ResultSetMetaData rsmd = rs.getMetaData();
+		int colCnt = rsmd.getColumnCount();
+		List meta = new ArrayList<>();
+		for (int i = 1; i <= colCnt; i++) {
+			Map colMeta = new HashMap();
+			colMeta.put("name", rsmd.getColumnName(i));
+			colMeta.put("type", rsmd.getColumnTypeName(i));
+			meta.add(colMeta);
+		}
+		map.put("metadata", meta);
+		while (rs.next()) {
+			List row = new ArrayList();
+			for (int i = 1; i <= colCnt; i++) {
+				row.add(rs.getObject(i));
+			}
+			list.add(row);
+		}
+		rs.close();
+		map.put("data", list);
+		return map;
 	}
 
 	public void refreshTable(String name) throws SQLException {
@@ -311,81 +382,5 @@ public class Impala {
 			return null;
 		}
 		return errors;
-	}
-
-	public Map query(String query) throws SQLException {
-		return query(query, false);
-	}
-
-	public Map query(String query, boolean metadataOnly) throws SQLException {
-		Map map = new HashMap<>();
-		Connection c = getConnection();
-		List list = new ArrayList<List>();
-		PreparedStatement ps = c.prepareStatement("USE "
-				+ config.getImpalaDbName());
-		ps.execute();
-		if (metadataOnly) {
-			query = "SELECT * FROM (" + query + " ) LIMIT 0";
-		}
-		ps = c.prepareStatement(query);
-		ResultSet rs = ps.executeQuery();
-		java.sql.ResultSetMetaData rsmd = rs.getMetaData();
-		int colCnt = rsmd.getColumnCount();
-		List meta = new ArrayList<>();
-		for (int i = 1; i <= colCnt; i++) {
-			Map colMeta = new HashMap();
-			colMeta.put("name", rsmd.getColumnName(i));
-			colMeta.put("type", rsmd.getColumnTypeName(i));
-			meta.add(colMeta);
-		}
-		map.put("metadata", meta);
-		while (rs.next()) {
-			List row = new ArrayList();
-			for (int i = 1; i <= colCnt; i++) {
-				row.add(rs.getObject(i));
-			}
-			list.add(row);
-		}
-		rs.close();
-		map.put("data", list);
-		return map;
-	}
-
-	@SuppressWarnings("unchecked")
-	public List getSample(String tableName, int limit) throws SQLException {
-		Connection c = getConnection();
-		String sql = "SELECT * FROM " + config.getImpalaDbName() + "."
-				+ tableName;
-		if (limit > 0) {
-			sql += " LIMIT " + limit;
-		}
-
-		PreparedStatement ps = c.prepareStatement(sql);
-		ResultSet rs = ps.executeQuery();
-		ResultSetMetaData rsmd = rs.getMetaData();
-		int colCnt = rsmd.getColumnCount();
-		List retval = new ArrayList();
-		while (rs.next()) {
-			List row = new ArrayList();
-			for (int i = 1; i < colCnt; i++) {
-				row.add(rs.getObject(i));
-			}
-			retval.add(row);
-		}
-		return retval;
-	}
-
-	public long getCount(String dsName) throws SQLException,
-			ClassNotFoundException {
-		Connection c = getConnection();
-		PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM "
-				+ dsName);
-		ResultSet rs = ps.executeQuery();
-		long retval = -1;
-		if (rs.next()) {
-			retval = (long) rs.getObject(1);
-			// Logger.log(dsName + " currently has " + +retval + " rows");
-		}
-		return retval;
 	}
 }

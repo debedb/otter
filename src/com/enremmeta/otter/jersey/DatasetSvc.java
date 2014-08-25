@@ -29,6 +29,16 @@ import com.enremmeta.otter.entity.LoadSource;
 
 @Path("/dataset")
 public class DatasetSvc {
+	private OfficeDb odb;
+
+	private CdhConnection cdhc;
+	private Impala imp;
+	
+	public DatasetSvc() {
+		super();
+		
+	}
+
 	@PUT
 	@Path("/create")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -41,9 +51,6 @@ public class DatasetSvc {
 							+ "pull metadata from the DB");
 		}
 		Logger.log("Entered /dataset/create, thread " + Thread.currentThread());
-		OfficeDb db = OfficeDb.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-		Impala imp = Impala.getInstance();
 
 		// 1. Copy file to cdh.upload_path
 		// 2. Copy to HDFS
@@ -54,7 +61,7 @@ public class DatasetSvc {
 		try {
 			cdhc.addDataset(ds);
 			imp.addDataset(ds);
-			int id = db.addDataset(ds);
+			int id = odb.addDataset(ds);
 			retval.put("id", id);
 
 		} catch (SQLException sqle) {
@@ -72,13 +79,9 @@ public class DatasetSvc {
 			throws OtterException {
 		Logger.log("Entered GET /dataset/create/" + id + ", thread "
 				+ Thread.currentThread());
-		OfficeDb db = OfficeDb.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-		Impala imp = Impala.getInstance();
-
+		
 		Map<String, Integer> retval = new HashMap<String, Integer>();
 		try {
-			OfficeDb odb = OfficeDb.getInstance();
 			Dataset ds = odb.getDataset(id);
 			cdhc.addDataset(ds);
 			imp.addDataset(ds);
@@ -96,9 +99,7 @@ public class DatasetSvc {
 		@SuppressWarnings("rawtypes")
 		List list = new ArrayList();
 		try {
-			Impala imp = Impala.getInstance();
-			OfficeDb db = OfficeDb.getInstance();
-			Dataset ds = db.getDataset(id);
+			Dataset ds = odb.getDataset(id);
 			list = imp.getSample(ds.getName(), rows);
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
@@ -110,9 +111,8 @@ public class DatasetSvc {
 	@Path("/meta/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Dataset getMeta(@PathParam("id") String id) throws OtterException {
-		OfficeDb db = OfficeDb.getInstance();
 		try {
-			Dataset ds = db.getDataset(Integer.parseInt(id));
+			Dataset ds = odb.getDataset(Integer.parseInt(id));
 			return ds;
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);
@@ -125,14 +125,11 @@ public class DatasetSvc {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map uploadDataset(@PathParam("id") String id,
 			List<LoadSource> sources) throws OtterException {
-		OfficeDb db = OfficeDb.getInstance();
-		Impala imp = Impala.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-
+		
 		Map map = new HashMap();
 		Config config = Config.getInstance();
 		try {
-			Dataset ds = db.getDataset(Integer.parseInt(id));
+			Dataset ds = odb.getDataset(Integer.parseInt(id));
 			String dsName = ds.getName();
 			long rowsBefore = imp.getCount(Config.getInstance()
 					.getImpalaDbName() + "." + dsName);
@@ -178,14 +175,11 @@ public class DatasetSvc {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map asyncUploadDataset(@PathParam("id") String id,
 			List<LoadSource> sources) throws OtterException {
-		OfficeDb db = OfficeDb.getInstance();
-		Impala imp = Impala.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-
+		
 		Map map = new HashMap();
 		Config config = Config.getInstance();
 		try {
-			Dataset ds = db.getDataset(Integer.parseInt(id));
+			Dataset ds = odb.getDataset(Integer.parseInt(id));
 			String dsName = ds.getName();
 			long rowsBefore = imp.getCount(Config.getInstance()
 					.getImpalaDbName() + "." + dsName);
@@ -229,13 +223,12 @@ public class DatasetSvc {
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void delete(@PathParam("id") int id) throws OtterException {
-		OfficeDb db = OfficeDb.getInstance();
 		Dataset ds;
 		try {
-			ds = db.getDataset(id);
+			ds = odb.getDataset(id);
 			String dsName = ds.getName();
-			CdhConnection.getInstance().deleteDataset(dsName);
-			Impala.getInstance().refreshTable(dsName);
+			cdhc.deleteDataset(dsName);
+			imp.refreshTable(dsName);
 		} catch (SQLException e) {
 			throw new OtterException(e);
 		}

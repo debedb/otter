@@ -19,6 +19,13 @@ import com.enremmeta.otter.entity.Query;
 @Path("/")
 public class Misc {
 	
+	private Impala imp;
+	
+	public Misc() {
+		super();
+		
+	}
+	
 	@GET
 	@Path("")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -36,7 +43,6 @@ public class Misc {
 		try {
 			String query = q.getQuery();
 			Map map = new HashMap();
-			Impala imp = Impala.getInstance();
 			map = imp.query(query);
 			return map;
 		} catch (SQLException sqle) {

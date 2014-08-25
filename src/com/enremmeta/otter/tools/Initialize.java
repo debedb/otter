@@ -32,27 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Initialize {
 
-	private static void connectOfficeDb() throws Exception {
-		OfficeDb odb = OfficeDb.getInstance();
-		odb.connect();
-		Logger.log("DB Connected.");
-	}
-
-	private static void setUp() throws Exception {
-		// connectOfficeDb();
-		CdhConnection.getInstance().connect();
-		Impala.getInstance().connect();
-		Logger.log("Connected to "
-				+ Config.getInstance().getProperty(Config.PROP_CDH_HOST) + ".");
-		Logger.log("Setup complete.");
-	}
-
-	private static void createMetadataTables() throws SQLException, ClassNotFoundException, OtterException {
-		Impala imp = Impala.getInstance();
-		imp.connect();
-		imp.createDb("otter");
-		
-	}
 	
 	public static void main(String[] args) throws Exception {
 		File configFile = new File("config/x5.properties");
@@ -64,6 +43,5 @@ public class Initialize {
 		Logger.log("Reading properties from " + configFile.getAbsolutePath()
 				+ "...");
 		Config.getInstance().load(configFile);
-		setUp();
 	}
 }

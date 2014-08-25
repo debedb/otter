@@ -26,14 +26,8 @@ public class CdhConnection {
 		Logger.log("CDHC> " + s);
 	}
 
-	private CdhConnection() {
+	public CdhConnection() {
 		super();
-	}
-
-	private static CdhConnection cdhc = new CdhConnection();
-
-	public static CdhConnection getInstance() {
-		return cdhc;
 	}
 
 	private String getShellOutput() throws IOException {

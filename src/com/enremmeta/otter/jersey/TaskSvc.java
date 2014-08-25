@@ -1,7 +1,7 @@
 package com.enremmeta.otter.jersey;
 
-import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -18,28 +18,25 @@ import com.enremmeta.otter.entity.Task;
 @Path("/task")
 public class TaskSvc {
 
+	private OfficeDb odb;
+	private Impala imp;
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@GET
 	@Path("/run/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map runTask(@PathParam("id") int id) throws OtterException {
-		try {
-			OfficeDb db = OfficeDb.getInstance();
-			Task task = db.getTask(id);
+		Task task = odb.getTask(id);
+		Map retval = new HashMap();
 
-			// Do filter, but tihs is confusing.
-			// Bit of a hack for now
-			Impala impala = Impala.getInstance();
-			String sql = impala.buildSql(task);
-			Map retval = new HashMap();
-			retval.put("sql", sql);
-			
-			Map rs = impala.query(sql);
-			retval.put("result_set", rs);
-			return retval;
-		} catch (SQLException sqle) {
-			throw new OtterException(sqle);
-		}
+		// Do filter, but tihs is confusing.
+		// Bit of a hack for now
+		List<String> sqls = imp.buildPrepSql(task);
+		// retval.put("sql", sql);
+		//
+		// Map rs = impala.query(sql);
+		// retval.put("result_set", rs);
+		return retval;
+
 	}
-
 }

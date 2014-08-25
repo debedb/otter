@@ -39,3 +39,10 @@ source.1.type=s3
 source.1.bucket=cloudera-impala-s3
 source.1.access=XXX
 source.1.secret=ZZZ
+
+rabbit.host=rabbit
+rabbit.exchange=xxx
+rabbit.queue_in=aaaa
+rabbit.queue_out=bbbb
+rabbit.username=user
+rabbit.password=passwd

@@ -23,14 +23,8 @@ import com.enremmeta.otter.entity.TaskDataSetProperty;
 
 public class OfficeDb {
 
-	private OfficeDb() {
+	public OfficeDb() {
 		super();
-	}
-
-	private static final OfficeDb odb = new OfficeDb();
-
-	public static OfficeDb getInstance() {
-		return odb;
 	}
 
 	private Connection con;
@@ -391,7 +385,6 @@ public class OfficeDb {
 		try {
 			loadTaskAlgorithm(t);
 			loadTaskDataSets(t);
-			final Map<Long, TaskDataSet> map = new HashMap<Long, TaskDataSet>();
 			loadTaskFilters(t);
 			loadTaskModifiers(t);
 			loadTaskModifiersGroup(t);

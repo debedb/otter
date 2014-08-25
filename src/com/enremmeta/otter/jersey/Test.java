@@ -18,17 +18,18 @@ import com.enremmeta.otter.OtterException;
 @Path("/test")
 public class Test {
 
+	private OfficeDb db;
+	private CdhConnection cdhc;
+	private Impala imp;
+
 	@POST
 	@Path("/cleanup")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map cleanup() throws OtterException {
-		OfficeDb db = OfficeDb.getInstance();
-		CdhConnection cdhc = CdhConnection.getInstance();
-		Impala imp = Impala.getInstance();
 		Map map = new HashMap();
 
 		int upd = db.testCleanup();
-		
+
 		List<String> errs = imp.testCleanup();
 		String err2 = cdhc.testCleanup();
 		if (err2 != null) {
@@ -36,11 +37,11 @@ public class Test {
 				errs = new ArrayList<String>();
 			}
 			errs.add(err2);
-		} 
+		}
 		if (errs != null) {
 			map.put("errors", errs);
 		}
-		
+
 		map.put("deleted_from_meta_db", "" + upd);
 		return map;
 	}
