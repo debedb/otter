@@ -1,7 +1,11 @@
 package com.enremmeta.otter;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -10,19 +14,26 @@ import com.rabbitmq.client.Envelope;
 
 public class RabbitFrontend implements Runnable {
 
+	public static List<String[]> TEST_COMMANDS = new ArrayList<String[]>();
+
 	public static class FrontendConsumer extends DefaultConsumer {
 
-		public FrontendConsumer(Channel channel) {
-			super(channel);
+		private int counter = 0;
+
+		private Rabbit rabbit;
+
+		public FrontendConsumer(Rabbit rabbit) {
+			super(rabbit.getChannel());
+			this.rabbit = rabbit;
 		}
-		
-	//	private String consumerTag;
+
+		// private String consumerTag;
 
 		@Override
 		public void handleConsumeOk(String consumerTag) {
 			// TODO Auto-generated method stub
 			super.handleConsumeOk(consumerTag);
-		//	this.consumerTag = consumerTag;
+			// this.consumerTag = consumerTag;
 		}
 
 		@Override
@@ -31,7 +42,17 @@ public class RabbitFrontend implements Runnable {
 			String exchange = envelope.getExchange();
 			String routingKey = envelope.getRoutingKey();
 			String payload = new String(body);
-			Logger.log("FRONTEND: Received message on Exchange [" + exchange + "] with routing key [" + routingKey + "]: " + payload);
+			Logger.log("FRONTEND: Received message on Exchange [" + exchange
+					+ "] with routing key [" + routingKey + "]: " + payload);
+			long deliveryTag = envelope.getDeliveryTag();
+			getChannel().basicAck(deliveryTag, false);
+			if (counter >= TEST_COMMANDS.size()) {
+				// getChannel().basicCancel(getConsumerTag());
+				Logger.log("DONE");
+				return;
+			}
+			String[] newMsg = TEST_COMMANDS.get(counter++);
+			rabbit.send(newMsg[0], newMsg[1]);
 		}
 	}
 
@@ -48,7 +69,7 @@ public class RabbitFrontend implements Runnable {
 
 	public void run() {
 		try {
-			rabbit.sendFb("fb.dataset_create", "{\"id\":6}");
+			Thread.sleep(1000);
 		} catch (Exception oe) {
 			oe.printStackTrace();
 		}
@@ -56,32 +77,60 @@ public class RabbitFrontend implements Runnable {
 
 	private boolean reader;
 
+	private static void loadTestData(File f) throws Exception {
+		BufferedReader br = new BufferedReader(new FileReader(f));
+		int lineCnt = -1;
+		String curCmd = null;
+		while (true) {
+			lineCnt ++;
+			String line = br.readLine();
+			if (line == null) {
+				break;
+			}
+			line = line.trim();
+			if (line.equals("")) {
+				continue;
+			}
+			if (lineCnt % 2 == 0) {
+				curCmd = line;
+			} else {
+				String payload = line;
+				TEST_COMMANDS.add(new String[] { curCmd, payload });
+				curCmd = null;
+			}
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
+		File testData = new File(args[0]);
+		loadTestData(testData);
 
 		File configFile = new File("config/otter.properties");
-		if (args.length == 0) {
+		if (args.length == 1) {
 			Logger.log("Assuming config in " + configFile.getAbsolutePath());
 		} else {
-			configFile = new File(args[0]);
+			configFile = new File(args[1]);
 		}
 
 		Logger.log("Reading properties from " + configFile.getAbsolutePath()
-
-		+ "...");
+				+ "...");
 		Config config = Config.getInstance();
 		config.load(configFile);
 		config.validate();
-		
-		Rabbit frontendConsumerRabbit = new Rabbit();
-		frontendConsumerRabbit.connect();
-		Channel frontendChannel = frontendConsumerRabbit.getChannel();
-			FrontendConsumer consumer = new FrontendConsumer(frontendChannel);
-		frontendConsumerRabbit.getChannel().basicConsume(frontendConsumerRabbit.getQueueOut(), consumer);
-		
-		RabbitFrontend writer = new RabbitFrontend(false);
-		writer.connect();
-		Thread writerThread = new Thread(writer);
-		writerThread.setName("FrontendConsumer");
-		writerThread.start();
+
+		Rabbit fRabbit = new Rabbit();
+		fRabbit.connect();
+		Channel frontendChannel = fRabbit.getChannel();
+		FrontendConsumer consumer = new FrontendConsumer(fRabbit);
+		fRabbit.getChannel().basicConsume(fRabbit.getQueueOut(), consumer);
+
+		// Kick this off...
+		fRabbit.send("fb.test_cleanup", "");
+
+		RabbitFrontend f = new RabbitFrontend(false);
+		f.connect();
+		Thread t = new Thread(f);
+		t.setName("Frontend");
+		t.start();
 	}
 }

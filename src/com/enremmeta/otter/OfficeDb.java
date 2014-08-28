@@ -475,7 +475,7 @@ public class OfficeDb {
 		}
 	}
 
-	public Dataset getDataset(int datasetId) throws SQLException {
+	public Dataset getDataset(long datasetId) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c
 				.prepareStatement("SELECT us.db_name, up.name, up.type FROM universal_source us "

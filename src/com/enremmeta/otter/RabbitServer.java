@@ -8,6 +8,7 @@ public class RabbitServer implements Runnable {
 
 	@Override
 	public void run() {
+	
 		while (true) {
 			try {
 				Thread.sleep(100);
@@ -26,10 +27,10 @@ public class RabbitServer implements Runnable {
 	private Rabbit rabbit = new Rabbit();
 
 	public void connect() throws Exception {
-		odb.connect();
-		cdhc.connect();
-		impala.connect();
-		rabbit.connect();
+//		odb.connect();
+//		cdhc.connect();
+//		impala.connect();
+//		rabbit.connect();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -52,15 +53,16 @@ public class RabbitServer implements Runnable {
 		consumerRabbit.connect();
 		RabbitBackendConsumer consumer = new RabbitBackendConsumer(
 				consumerRabbit);
+		consumer.connect();
 		Channel backendChannel = consumerRabbit.getChannel();
 		backendChannel.basicConsume(consumerRabbit.getQueueIn(), consumer);
 
-		RabbitServerProducer producer = new RabbitServerProducer();
-		producer.connect();
+		RabbitServer server = new RabbitServer();
 
-		Thread pThread = new Thread(producer);
-		pThread.setName("BackendProducer");
-		pThread.join();
-		pThread.start();
+		Thread thread = new Thread(server);
+		thread.setName("BackendServer");
+		thread.join();
+		thread.start();
+		Logger.log("Ready...");
 	}
 }

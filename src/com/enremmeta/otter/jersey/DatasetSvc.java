@@ -156,7 +156,7 @@ public class DatasetSvc {
 				cdhc.loadDataFromS3(s3Bucket, path, accessKey, secretKey,
 						dsName);
 			}
-			imp.refreshTable(dsName);
+			imp.refreshTable(ds);
 			long rowsAfter = imp.getCount(Config.getInstance()
 					.getImpalaDbName() + "." + dsName);
 			map.put("rows_before", rowsBefore);
@@ -206,7 +206,7 @@ public class DatasetSvc {
 				cdhc.loadDataFromS3(s3Bucket, path, accessKey, secretKey,
 						dsName);
 			}
-			imp.refreshTable(dsName);
+			imp.refreshTable(ds);
 			long rowsAfter = imp.getCount(Config.getInstance()
 					.getImpalaDbName() + "." + dsName);
 			map.put("rows_before", rowsBefore);
@@ -228,7 +228,7 @@ public class DatasetSvc {
 			ds = odb.getDataset(id);
 			String dsName = ds.getName();
 			cdhc.deleteDataset(dsName);
-			imp.refreshTable(dsName);
+			imp.refreshTable(ds);
 		} catch (SQLException e) {
 			throw new OtterException(e);
 		}

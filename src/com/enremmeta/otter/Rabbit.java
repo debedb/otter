@@ -2,9 +2,11 @@ package com.enremmeta.otter;
 
 import java.io.IOException;
 
-import org.apache.http.annotation.ThreadSafe;
-
-import com.rabbitmq.client.AMQP;
+import com.enremmeta.otter.entity.messages.OtterMessage;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -53,6 +55,9 @@ public class Rabbit {
 
 	public Rabbit() {
 		super();
+		JsonFactory jsonFactory = new JsonFactory();
+		jsonFactory.configure(Feature.ALLOW_SINGLE_QUOTES, true);
+		mapper = new ObjectMapper(jsonFactory);
 	}
 
 	private String exchange;
@@ -64,23 +69,25 @@ public class Rabbit {
 	private Channel channel;
 	private Connection connection;
 
-	public void sendFb(String key, String msg) throws OtterException {
+	public void send(String key, String msg) throws IOException {
+		String logMsg = "Sending " + key + ": " + msg + ": ";
 		try {
 			channel.basicPublish(exchange, key, null, msg.getBytes());
+			Logger.log(logMsg + "OK");
 		} catch (IOException e) {
-			throw new OtterException(e);
+			Logger.log(logMsg + "Failed (" + e.getMessage() + ")");
+			throw e;
 		}
 	}
 
-	public void sendBf(String key, String msg) throws OtterException {
-		try {
-			channel.basicPublish(exchange, key, null, msg.getBytes());
-		} catch (IOException e) {
-			throw new OtterException(e);
-		}
+	private ObjectMapper mapper;
+
+	public void send(String key, OtterMessage msg) throws IOException {
+		String msgStr;
+		msgStr = mapper.writeValueAsString(msg);
+		send(key, msgStr);
 	}
-	
-	
+
 	public void x() throws OtterException {
 		try {
 		} catch (Exception e) {
@@ -103,7 +110,7 @@ public class Rabbit {
 			exchange = Config.getInstance().getProperty("rabbit.exchange");
 			queueIn = Config.getInstance().getProperty("rabbit.queue_in");
 			queueOut = Config.getInstance().getProperty("rabbit.queue_out");
-			
+
 			channel.exchangeDeclarePassive(exchange);
 			channel.queueDeclarePassive(queueIn);
 			channel.queueBind(queueIn, exchange, "");

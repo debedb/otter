@@ -1,0 +1,10 @@
+fb.test_cleanup
+
+fb.dataset_load
+{ "id" : 6, "mode" : "append", "sources" : [{"path" : "/test1/test1000.dsv", "location" : 1 }]}
+fb.dataset_update
+{ "id" : 6}
+fb.dataset_load
+{ "id" : 6, "mode" : "append", "sources" : [{"path" : "/test1/test1000.dsv", "location" : 1} ]}
+fb.task_run
+{ "id" : "6" }

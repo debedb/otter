@@ -17,15 +17,15 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
-public class CdhConnection {
+public class AsyncCdhConnection {
 	private JSch jsch;
-//
-//	private static CdhConnection cdhc = new CdhConnection();
-//
-//	public static CdhConnection getInstance() {
-//		return cdhc;
-//	}
-//	
+
+	private static AsyncCdhConnection cdhc = new AsyncCdhConnection();
+
+	public static AsyncCdhConnection getInstance() {
+		return cdhc;
+	}
+	
 	private List<String> userStack = new ArrayList<String>();
 	
 	private List<String> promptStack = new ArrayList<String>();
@@ -50,7 +50,7 @@ public class CdhConnection {
 
 	private BufferedReader br;
 
-	public CdhConnection() {
+	private AsyncCdhConnection() {
 		super();
 	}
 

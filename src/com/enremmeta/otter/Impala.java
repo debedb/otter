@@ -44,20 +44,24 @@ public class Impala {
 
 	private Config config;
 
-
 	public Impala() {
 		super();
 		config = Config.getInstance();
 	}
 
+	private String getTableName(Dataset ds) {
+		String fqtn = config.getImpalaDbName() + "." + ds.getName();
+		// Cthulhu fqtn!
+		return fqtn;
+	}
+
 	// TODO partitioning...
 	/**
-	 * Creates a new table in Impala
+	 * Creates a new table in Impala.
 	 */
 	public void addDataset(Dataset ds) throws SQLException,
 			ClassNotFoundException {
-		String sql = "CREATE EXTERNAL TABLE " + config.getImpalaDbName() + "."
-				+ ds.getName() + " ( ";
+		String sql = "CREATE EXTERNAL TABLE " + getTableName(ds) + " ( ";
 		String colClause = "";
 		for (DatasetColumn col : ds.getColumns()) {
 			if (colClause.length() > 0) {
@@ -77,6 +81,17 @@ public class Impala {
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 		getCount(config.getImpalaDbName() + "." + ds.getName());
+	}
+
+	public void updateDataset(Dataset ds) throws SQLException,
+			ClassNotFoundException {
+		Connection c = getConnection();
+		// Dropping external tables doesn't change anything...
+		PreparedStatement ps = c.prepareStatement("DROP TABLE "
+				+ getTableName(ds));
+		ps.execute();
+		addDataset(ds);
+		refreshTable(ds);
 	}
 
 	public List<String> buildPrepSql(Task task) throws OtterException {
@@ -104,13 +119,13 @@ public class Impala {
 							+ tdsp.getUniversalName() + ") " + alias;
 				}
 			} else {
-				for (TaskDataSetProperty field: tds.getFields()) {
+				for (TaskDataSetProperty field : tds.getFields()) {
 					if (selectClause.length() > 0) {
 						selectClause += ", ";
 					}
 
-					selectClause +=  field.getTableName() + "."
-							+ field.getUniversalName() ;
+					selectClause += field.getTableName() + "."
+							+ field.getUniversalName();
 				}
 			}
 
@@ -326,11 +341,10 @@ public class Impala {
 		return map;
 	}
 
-	public void refreshTable(String name) throws SQLException {
+	public void refreshTable(Dataset ds) throws SQLException {
 		Connection c = getConnection();
-		String sql = "ALTER TABLE " + config.getImpalaDbName() + "." + name
-				+ " " + "SET LOCATION '" + config.getOtterHdfsPrefix() + name
-				+ "'";
+		String sql = "ALTER TABLE " + getTableName(ds) + " " + "SET LOCATION '"
+				+ config.getOtterHdfsPrefix() + ds.getName() + "'";
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 	}
