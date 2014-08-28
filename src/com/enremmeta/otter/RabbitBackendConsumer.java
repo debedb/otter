@@ -212,11 +212,13 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 
 				taskStatus = new TaskStatusMessage();
 				taskStatus.setId(id);
-				taskStatus.setStatus("result_ing");
+				taskStatus.setStatus("result_saving");
 				taskStatus.setWorkflowId(workflowId);
 				taskStatus.setTimestamp(System.currentTimeMillis());
 
 				TaskInfoResultSaved resultSaving = new TaskInfoResultSaved();
+				taskStatus.setInfo(resultSaving);
+				
 				List<TableMetaData> resultTables = new ArrayList<TableMetaData>();
 				resultSaving.setResultTables(resultTables);
 

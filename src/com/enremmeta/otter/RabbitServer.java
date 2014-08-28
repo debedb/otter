@@ -8,7 +8,7 @@ public class RabbitServer implements Runnable {
 
 	@Override
 	public void run() {
-	
+
 		while (true) {
 			try {
 				Thread.sleep(100);
@@ -27,10 +27,10 @@ public class RabbitServer implements Runnable {
 	private Rabbit rabbit = new Rabbit();
 
 	public void connect() throws Exception {
-//		odb.connect();
-//		cdhc.connect();
-//		impala.connect();
-//		rabbit.connect();
+		// odb.connect();
+		// cdhc.connect();
+		// impala.connect();
+		// rabbit.connect();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -42,13 +42,12 @@ public class RabbitServer implements Runnable {
 		}
 
 		Logger.log("Reading properties from " + configFile.getAbsolutePath()
-
-		+ "...");
+				+ "...");
 
 		Config config = Config.getInstance();
 		config.load(configFile);
 		config.validate();
-
+		
 		Rabbit consumerRabbit = new Rabbit();
 		consumerRabbit.connect();
 		RabbitBackendConsumer consumer = new RabbitBackendConsumer(
