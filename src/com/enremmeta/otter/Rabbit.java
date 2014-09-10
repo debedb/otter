@@ -5,11 +5,11 @@ import java.io.IOException;
 import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+
 
 public class Rabbit {
 
@@ -77,6 +77,8 @@ public class Rabbit {
 		} catch (IOException e) {
 			Logger.log(logMsg + "Failed (" + e.getMessage() + ")");
 			throw e;
+		} catch (Exception e2)  {
+			throw e2;
 		}
 	}
 

@@ -199,7 +199,7 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 			if (op.equals("task_run")) {
 				long workflowId = 23;
 				TaskStatusMessage taskStatus = new TaskStatusMessage();
-				taskStatus.setId(id);
+				taskStatus.setTaskId(id);
 				taskStatus.setStatus("started");
 				taskStatus.setWorkflowId(workflowId);
 				taskStatus.setTimestamp(System.currentTimeMillis());
@@ -211,7 +211,7 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 				}
 
 				taskStatus = new TaskStatusMessage();
-				taskStatus.setId(id);
+				taskStatus.setTaskId(id);
 				taskStatus.setStatus("result_saving");
 				taskStatus.setWorkflowId(workflowId);
 				taskStatus.setTimestamp(System.currentTimeMillis());

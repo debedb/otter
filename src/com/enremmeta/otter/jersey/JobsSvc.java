@@ -1,6 +1,5 @@
 package com.enremmeta.otter.jersey;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 

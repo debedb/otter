@@ -9,7 +9,6 @@ import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -19,7 +18,6 @@ import javax.ws.rs.core.MediaType;
 
 import com.enremmeta.otter.CdhConnection;
 import com.enremmeta.otter.Config;
-import com.enremmeta.otter.Constants;
 import com.enremmeta.otter.Impala;
 import com.enremmeta.otter.Logger;
 import com.enremmeta.otter.OfficeDb;

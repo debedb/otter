@@ -6,8 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import com.enremmeta.otter.entity.Algorithm;
@@ -68,7 +66,7 @@ public class OfficeDb {
 			+ " up.name UniversalPropertyName, "
 			+ " up.type UniversalPropertyType, "
 			+ " up.type_enum_values UniversalPropertyEnumVals, "
-			+ " us.db_name DbName "
+			+ " us.name DbName "
 			+ "FROM task t "
 			+ "JOIN task_data_set tds ON t.id = tds.task_id "
 			+ "JOIN task_data_set_filter tdsf ON tdsf.task_data_set_id = tds.id "
@@ -84,7 +82,7 @@ public class OfficeDb {
 			+ "tds.name TaskDataSetName, "
 			+ "tdsm.alias ModifierAlias, "
 			+ " tdsm.expression ModifierExpression, tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
 			+ " FROM task_data_set tds "
 			+ " JOIN task_data_set_modifier tdsm ON tdsm.task_data_set_id = tds.id "
 			+ " JOIN task_data_set_property tdsp "
@@ -100,7 +98,7 @@ public class OfficeDb {
 			+ " tdsms.id TdsmsId, "
 			+ " tdsms.direction Direction, tdsp.id TdspId, "
 			+ " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
 			+ " FROM task_data_set tds "
 			+ " JOIN task_data_set_modifier_sort tdsms ON tdsms.task_data_set_id = tds.id "
 			+ " JOIN task_data_set_property tdsp "
@@ -114,7 +112,7 @@ public class OfficeDb {
 	private static final String TASK_MODIFIERS_GROUP_SQL = "SELECT tds.id TdsId, tds.name TaskDataSetName, tdsmg.id TdsmgId, "
 			+ "tdsp.id TdspId, "
 			+ " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.db_name DbName "
+			+ " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
 			+ " FROM task_data_set tds "
 			+ " JOIN task_data_set_modifier_group tdsmg ON tdsmg.task_data_set_id = tds.id "
 			+ " JOIN task_data_set_property tdsp "
@@ -133,7 +131,7 @@ public class OfficeDb {
 	private static final String TASK_DATASET_SQL = "SELECT  t.name TaskName, tds.id TdsId, tds.name TaskDataSetName, "
 			+ " tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle,  "
 			+ " up.name UniversalPropertyName,  up.type UniversalPropertyType,  "
-			+ " up.type_enum_values UniversalPropertyEnumVals, us.db_name DbName "
+			+ " up.type_enum_values UniversalPropertyEnumVals, us.name DbName "
 			+ " FROM task t JOIN task_data_set tds ON t.id = tds.task_id "
 			+ " JOIN task_data_set_property tdsp  ON tds.id = tdsp.task_data_set_id "
 			+ " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
@@ -478,7 +476,7 @@ public class OfficeDb {
 	public Dataset getDataset(long datasetId) throws SQLException {
 		Connection c = getConnection();
 		PreparedStatement ps = c
-				.prepareStatement("SELECT us.db_name, up.name, up.type FROM universal_source us "
+				.prepareStatement("SELECT us.name, up.name, up.type FROM universal_source us "
 						+ "JOIN universal_property up ON up.universal_source_id = us.id "
 						+ "WHERE us.id = ?");
 		ps.setObject(1, datasetId);

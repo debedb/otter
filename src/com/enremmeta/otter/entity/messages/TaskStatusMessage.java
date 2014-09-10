@@ -2,7 +2,15 @@ package com.enremmeta.otter.entity.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TaskStatusMessage extends IdMessage {
+public class TaskStatusMessage  implements OtterMessage {
+
+	public long getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(long taskId) {
+		this.taskId = taskId;
+	}
 
 	public TaskStatusMessage() {
 		// TODO Auto-generated constructor stub
@@ -15,6 +23,9 @@ public class TaskStatusMessage extends IdMessage {
 	@JsonProperty("executed_timestamp")
 	private long timestamp;
 
+	@JsonProperty("task_id")
+	private long taskId;
+	
 	@JsonProperty("workflow_id")
 	private long workflowId;
 

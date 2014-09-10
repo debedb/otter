@@ -2,10 +2,6 @@ package com.enremmeta.otter;
 
 import java.sql.SQLException;
 
-import javax.ws.rs.core.Response.StatusType;
-
-import org.eclipse.jetty.websocket.api.StatusCode;
-
 public class OtterException extends Exception {
 
 	/**

@@ -12,14 +12,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.enremmeta.otter.Constants;
-import com.enremmeta.otter.Impala;
 import com.enremmeta.otter.OtterException;
+import com.enremmeta.otter.WebServer;
 import com.enremmeta.otter.entity.Query;
 
 @Path("/")
 public class Misc {
-	
-	private Impala imp;
 	
 	public Misc() {
 		super();
@@ -43,7 +41,7 @@ public class Misc {
 		try {
 			String query = q.getQuery();
 			Map map = new HashMap();
-			map = imp.query(query);
+			map = WebServer.impala.query(query);
 			return map;
 		} catch (SQLException sqle) {
 			throw new OtterException(sqle);

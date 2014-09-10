@@ -7,30 +7,17 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ServerProperties;
 
-import com.rabbitmq.client.AMQP.Connection;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
-
 public class WebServer {
 
-	private static void startServer() throws Exception {
+	public static final Impala impala = new Impala();
+
+	public static Server startServer() throws Exception {
 		Config config = Config.getInstance();
 		Logger.log("Port: " + config.getProperty(Config.PROP_OTTER_MGR_PORT));
 		int port = Integer.parseInt(config
 				.getProperty(Config.PROP_OTTER_MGR_PORT));
 
-		// System.setProperty("jetty.host", "0.0.0.0");
-		// System.setProperty("jetty.port", String.valueOf(port));
 		Server server = new Server(port);
-
-		// InetSocketAddress inetAddr = InetSocketAddress.createUnresolved(
-		// "0.0.0.0", port);
-
-		// Server server = new Server(new InetSocketAddress("54.235.199.212",
-		// port));
-		// Server server = new Server(new
-		// InetSocketAddress("ec2-54-235-199-212.compute-1.amazonaws.com",
-		// port));
 
 		ServletContextHandler context = new ServletContextHandler(
 				ServletContextHandler.NO_SESSIONS);
@@ -46,9 +33,10 @@ public class WebServer {
 				"com.sun.jersey.api.json.POJOMappingFeature", "true");
 
 		// server.setHandler(new Main());
+		impala.connect();
 		server.start();
 		Logger.log("Listening on " + port + "...");
-		server.join();
+		return server;
 	}
 
 	public static void main(String[] args) throws Exception {

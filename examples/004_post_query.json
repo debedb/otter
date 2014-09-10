@@ -1,6 +1,6 @@
 # Execute a query
-# POST /query/<ID>
+# POST /query
 { 
-    "query" : "SELECT COUNT(trn_id), MIN(tdt_qty), MAX(tdt_qty), AVG(tdt_qty) FROM test1",
+    "query" : "SELECT COUNT(trn_id), MIN(tdt_qty), MAX(tdt_qty), AVG(tdt_qty) FROM data_product_category",
     "save"  : true
 }

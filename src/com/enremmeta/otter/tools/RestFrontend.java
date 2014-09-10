@@ -29,7 +29,7 @@ import com.enremmeta.otter.Logger;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Client {
+public class RestFrontend {
 
 	private static Object runCommand(String jsonFilename, String id)
 			throws Exception {
@@ -174,6 +174,7 @@ public class Client {
 			try {
 				String filePrefix = jsonFile.split("_")[0];
 				Long testNum = Long.valueOf(filePrefix);
+				
 				
 			} catch (NumberFormatException nfe) {
 				System.err.println("Ignoring file " + jsonFile);

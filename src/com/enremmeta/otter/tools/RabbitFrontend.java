@@ -1,4 +1,4 @@
-package com.enremmeta.otter;
+package com.enremmeta.otter.tools;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.enremmeta.otter.Config;
+import com.enremmeta.otter.Logger;
+import com.enremmeta.otter.OtterException;
+import com.enremmeta.otter.Rabbit;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -82,6 +86,7 @@ public class RabbitFrontend implements Runnable {
 		int lineCnt = -1;
 		String curCmd = null;
 		while (true) {
+
 			lineCnt ++;
 			String line = br.readLine();
 			if (line == null) {
@@ -91,6 +96,7 @@ public class RabbitFrontend implements Runnable {
 			if (line.equals("")) {
 				continue;
 			}
+			
 			if (lineCnt % 2 == 0) {
 				curCmd = line;
 			} else {

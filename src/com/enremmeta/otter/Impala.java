@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hive.jdbc.HiveDriver;
-
 import com.enremmeta.otter.entity.Dataset;
 import com.enremmeta.otter.entity.DatasetColumn;
 import com.enremmeta.otter.entity.Task;
@@ -225,7 +223,7 @@ public class Impala {
 		String impalaHost = config.getProperty(Config.PROP_CDH_HOST);
 		String url = "jdbc:hive2://" + impalaHost + ":21050/;auth=noSasl";
 		Logger.log("Connecting to " + url + "...");
-		Class klass0 = HiveDriver.class;
+		Class klass0 = org.apache.hadoop.hive.jdbc.HiveDriver.class;
 		Class klass = klass0;
 		try {
 			klass = Class.forName("org.apache.hive.jdbc.HiveDriver");
