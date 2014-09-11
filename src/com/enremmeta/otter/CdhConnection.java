@@ -19,15 +19,15 @@ import com.jcraft.jsch.Session;
 
 public class CdhConnection {
 	private JSch jsch;
-//
-//	private static CdhConnection cdhc = new CdhConnection();
-//
-//	public static CdhConnection getInstance() {
-//		return cdhc;
-//	}
-//	
+	//
+	// private static CdhConnection cdhc = new CdhConnection();
+	//
+	// public static CdhConnection getInstance() {
+	// return cdhc;
+	// }
+	//
 	private List<String> userStack = new ArrayList<String>();
-	
+
 	private List<String> promptStack = new ArrayList<String>();
 
 	private Session sess;
@@ -132,14 +132,14 @@ public class CdhConnection {
 
 	public void deleteDataset(String name) throws OtterException {
 		try {
-			String cmd ="hadoop fs -rm -r -f hdfs:"
+			String cmd = "hadoop fs -rm -r -f hdfs:"
 					+ Config.getInstance().getOtterHdfsPrefix() + name;
 			execAsCdh(cmd);
 		} catch (Exception e) {
 			throw new OtterException(e);
 		}
 	}
-	
+
 	private void execAsCdh(String cmd) throws Exception {
 		sudoCdhUser();
 		shellCommand(cmd, true);
@@ -198,6 +198,7 @@ public class CdhConnection {
 		cmd = "sudo su -l " + user + " -c '" + cmd + "'";
 		execCommand(cmd);
 	}
+
 	private void exitShell() throws IOException {
 		// log("Users on stack before exit: " + userStack.toString());
 		shellCommand("exit", false);
@@ -257,6 +258,7 @@ public class CdhConnection {
 						+ Config.getInstance().getOtterHdfsPrefix()
 						+ ds.getName(), true);
 	}
+
 	// sudo su -l hdfs -c 'pwd'
 	public void loadDataFromS3(String bucket, String path, String accessKey,
 			String secretKey, String tableName) throws OtterException {
@@ -287,6 +289,7 @@ public class CdhConnection {
 			throw new OtterException(e);
 		}
 	}
+
 	private void log(String s) {
 		Logger.log("CDHC> " + s);
 	}
@@ -336,16 +339,20 @@ public class CdhConnection {
 		setPrompt();
 	}
 
-	public String testCleanup() {
+	public String drop(String name) {
 		try {
 			sudoCdhUser();
 			shellCommand("hadoop fs -rm -r -f hdfs:"
-					+ Config.getInstance().getOtterHdfsPrefix() + "test1", true);
+					+ Config.getInstance().getOtterHdfsPrefix() + name, true);
 			popSudos();
 			return null;
 		} catch (Exception e) {
 			return e.getMessage();
 		}
+	}
+
+	public String testCleanup() {
+		return drop("test1");
 	}
 
 	public void upload(String lfile) throws IOException, JSchException {

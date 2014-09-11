@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project Otter with libraries in sub-folder">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="/home/grisha/misc/otterout/vydra.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.enremmeta.otter.Server"/>
+                <attribute name="Class-Path" value=". vydra_lib/httpclient-4.3.2.jar vydra_lib/commons-logging-1.1.3.jar vydra_lib/commons-codec-1.6.jar vydra_lib/httpcore-4.3.2.jar vydra_lib/commons-cli-1.2.jar vydra_lib/jetty-server-9.2.2.v20140723.jar vydra_lib/javax.servlet-api-3.1.0.jar vydra_lib/jetty-http-9.2.2.v20140723.jar vydra_lib/jetty-io-9.2.2.v20140723.jar vydra_lib/jetty-servlet-9.2.2.v20140723.jar vydra_lib/jetty-security-9.2.2.v20140723.jar vydra_lib/jetty-util-9.2.2.v20140723.jar vydra_lib/jersey-server-2.11.jar vydra_lib/jersey-client-2.11.jar vydra_lib/javax.ws.rs-api-2.0.jar vydra_lib/javax.annotation-api-1.2.jar vydra_lib/hk2-api-2.3.0-b05.jar vydra_lib/hk2-utils-2.3.0-b05.jar vydra_lib/aopalliance-repackaged-2.3.0-b05.jar vydra_lib/javax.inject-2.3.0-b05.jar vydra_lib/hk2-locator-2.3.0-b05.jar vydra_lib/javassist-3.18.1-GA.jar vydra_lib/validation-api-1.1.0.Final.jar vydra_lib/jersey-common-2.11.jar vydra_lib/jersey-guava-2.11.jar vydra_lib/osgi-resource-locator-1.0.1.jar vydra_lib/jersey-media-json-jackson-2.11.jar vydra_lib/jackson-annotations-2.2.2.jar vydra_lib/jackson-core-2.2.2.jar vydra_lib/jackson-databind-2.2.2.jar vydra_lib/jackson-jaxrs-base-2.2.2.jar vydra_lib/jackson-jaxrs-json-provider-2.2.2.jar vydra_lib/jackson-module-jaxb-annotations-2.2.2.jar vydra_lib/jersey-container-servlet-core-2.11.jar vydra_lib/jersey-container-jetty-http-2.11.jar vydra_lib/jetty-continuation-9.1.1.v20140108.jar vydra_lib/commons-collections-3.2.1.jar vydra_lib/slf4j-simple-1.7.7.jar vydra_lib/slf4j-api-1.7.7.jar vydra_lib/amqp-client-3.3.5.jar vydra_lib/jsch-0.1.51.jar vydra_lib/hive-jdbc-0.12.0-cdh5.1.0.jar vydra_lib/hive-serde-0.12.0-cdh5.1.0.jar vydra_lib/hive-exec-0.12.0-cdh5.1.0.jar vydra_lib/hive-ant-0.12.0-cdh5.1.0.jar vydra_lib/velocity-1.5.jar vydra_lib/oro-2.0.8.jar vydra_lib/parquet-hadoop-bundle-1.2.5-cdh5.1.0.jar vydra_lib/ST4-4.0.4.jar vydra_lib/ant-1.9.1.jar vydra_lib/ant-launcher-1.9.1.jar vydra_lib/groovy-all-2.1.6.jar vydra_lib/stax-api-1.0.1.jar vydra_lib/libthrift-0.9.0.cloudera.2.jar vydra_lib/slf4j-log4j12-1.7.5.jar vydra_lib/hive-metastore-0.12.0-cdh5.1.0.jar vydra_lib/hive-shims-0.12.0-cdh5.1.0.jar vydra_lib/hive-shims-common-0.12.0-cdh5.1.0.jar vydra_lib/hive-shims-common-secure-0.12.0-cdh5.1.0.jar vydra_lib/hive-shims-0.23-0.12.0-cdh5.1.0.jar vydra_lib/guava-11.0.2.jar vydra_lib/bonecp-0.7.1.RELEASE.jar vydra_lib/commons-lang-2.4.jar vydra_lib/derby-10.4.2.0.jar vydra_lib/datanucleus-api-jdo-3.2.1.jar vydra_lib/datanucleus-core-3.2.2.jar vydra_lib/datanucleus-rdbms-3.2.1.jar vydra_lib/jdo-api-3.0.1.jar vydra_lib/jta-1.1.jar vydra_lib/antlr-runtime-3.4.jar vydra_lib/stringtemplate-3.2.1.jar vydra_lib/antlr-2.7.7.jar vydra_lib/libfb303-0.9.0.jar vydra_lib/hive-service-0.12.0-cdh5.1.0.jar vydra_lib/jetty-6.1.26.cloudera.2.jar vydra_lib/servlet-api-2.5-20081211.jar vydra_lib/jetty-util-6.1.26.cloudera.2.jar vydra_lib/hive-common-0.12.0-cdh5.1.0.jar vydra_lib/log4j-1.2.16.jar vydra_lib/commons-compress-1.4.1.jar vydra_lib/xz-1.0.jar vydra_lib/hadoop-common-2.3.0-cdh5.1.0.jar vydra_lib/hadoop-annotations-2.3.0-cdh5.1.0.jar vydra_lib/tools.jar vydra_lib/commons-math3-3.1.1.jar vydra_lib/xmlenc-0.52.jar vydra_lib/commons-httpclient-3.1.jar vydra_lib/commons-io-2.4.jar vydra_lib/commons-net-3.1.jar vydra_lib/servlet-api-2.5.jar vydra_lib/jersey-core-1.9.jar vydra_lib/jersey-json-1.9.jar vydra_lib/jettison-1.1.jar vydra_lib/jaxb-impl-2.2.3-1.jar vydra_lib/jaxb-api-2.2.2.jar vydra_lib/stax-api-1.0-2.jar vydra_lib/activation-1.1.jar vydra_lib/jackson-jaxrs-1.8.3.jar vydra_lib/jackson-xc-1.8.3.jar vydra_lib/jersey-server-1.9.jar vydra_lib/asm-3.1.jar vydra_lib/jasper-compiler-5.5.23.jar vydra_lib/jasper-runtime-5.5.23.jar vydra_lib/jsp-api-2.1.jar vydra_lib/commons-el-1.0.jar vydra_lib/jets3t-0.9.0.jar vydra_lib/java-xmlbuilder-0.4.jar vydra_lib/commons-configuration-1.6.jar vydra_lib/commons-digester-1.8.jar vydra_lib/commons-beanutils-1.7.0.jar vydra_lib/commons-beanutils-core-1.8.0.jar vydra_lib/jackson-core-asl-1.8.8.jar vydra_lib/jackson-mapper-asl-1.8.8.jar vydra_lib/avro-1.7.5-cdh5.1.0.jar vydra_lib/paranamer-2.3.jar vydra_lib/snappy-java-1.0.5.jar vydra_lib/protobuf-java-2.5.0.jar vydra_lib/hadoop-auth-2.3.0-cdh5.1.0.jar vydra_lib/apacheds-kerberos-codec-2.0.0-M15.jar vydra_lib/apacheds-i18n-2.0.0-M15.jar vydra_lib/api-asn1-api-1.0.0-M20.jar vydra_lib/api-util-1.0.0-M20.jar vydra_lib/jsr305-1.3.9.jar vydra_lib/zookeeper-3.4.5-cdh5.1.0.jar vydra_lib/mysql-connector-java-5.1.6.jar"/>
+            </manifest>
+            <fileset dir="/home/grisha/git/otter/target/classes"/>
+        </jar>
+        <delete dir="/home/grisha/misc/otterout/vydra_lib"/>
+        <mkdir dir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/httpcomponents/httpclient/4.3.2/httpclient-4.3.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-logging/commons-logging/1.1.3/commons-logging-1.1.3.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-codec/commons-codec/1.6/commons-codec-1.6.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/httpcomponents/httpcore/4.3.2/httpcore-4.3.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-cli/commons-cli/1.2/commons-cli-1.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-server/9.2.2.v20140723/jetty-server-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-http/9.2.2.v20140723/jetty-http-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-io/9.2.2.v20140723/jetty-io-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-servlet/9.2.2.v20140723/jetty-servlet-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-security/9.2.2.v20140723/jetty-security-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-util/9.2.2.v20140723/jetty-util-9.2.2.v20140723.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/core/jersey-server/2.11/jersey-server-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/core/jersey-client/2.11/jersey-client-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/ws/rs/javax.ws.rs-api/2.0/javax.ws.rs-api-2.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/annotation/javax.annotation-api/1.2/javax.annotation-api-1.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/hk2-api/2.3.0-b05/hk2-api-2.3.0-b05.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/hk2-utils/2.3.0-b05/hk2-utils-2.3.0-b05.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/external/aopalliance-repackaged/2.3.0-b05/aopalliance-repackaged-2.3.0-b05.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/external/javax.inject/2.3.0-b05/javax.inject-2.3.0-b05.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/hk2-locator/2.3.0-b05/hk2-locator-2.3.0-b05.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/core/jersey-common/2.11/jersey-common-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.11/jersey-guava-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/hk2/osgi-resource-locator/1.0.1/osgi-resource-locator-1.0.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/media/jersey-media-json-jackson/2.11/jersey-media-json-jackson-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.2.2/jackson-annotations-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.2.2/jackson-core-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.2.2/jackson-databind-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.2.2/jackson-jaxrs-base-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.2.2/jackson-jaxrs-json-provider-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.2.2/jackson-module-jaxb-annotations-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/containers/jersey-container-servlet-core/2.11/jersey-container-servlet-core-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/glassfish/jersey/containers/jersey-container-jetty-http/2.11/jersey-container-jetty-http-2.11.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/eclipse/jetty/jetty-continuation/9.1.1.v20140108/jetty-continuation-9.1.1.v20140108.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/slf4j/slf4j-simple/1.7.7/slf4j-simple-1.7.7.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/rabbitmq/amqp-client/3.3.5/amqp-client-3.3.5.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/jcraft/jsch/0.1.51/jsch-0.1.51.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-jdbc/0.12.0-cdh5.1.0/hive-jdbc-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-serde/0.12.0-cdh5.1.0/hive-serde-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-exec/0.12.0-cdh5.1.0/hive-exec-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-ant/0.12.0-cdh5.1.0/hive-ant-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/velocity/velocity/1.5/velocity-1.5.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/oro/oro/2.0.8/oro-2.0.8.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/twitter/parquet-hadoop-bundle/1.2.5-cdh5.1.0/parquet-hadoop-bundle-1.2.5-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/antlr/ST4/4.0.4/ST4-4.0.4.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/ant/ant/1.9.1/ant-1.9.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/ant/ant-launcher/1.9.1/ant-launcher-1.9.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/groovy/groovy-all/2.1.6/groovy-all-2.1.6.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/stax/stax-api/1.0.1/stax-api-1.0.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/thrift/libthrift/0.9.0.cloudera.2/libthrift-0.9.0.cloudera.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/slf4j/slf4j-log4j12/1.7.5/slf4j-log4j12-1.7.5.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-metastore/0.12.0-cdh5.1.0/hive-metastore-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-shims/0.12.0-cdh5.1.0/hive-shims-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/shims/hive-shims-common/0.12.0-cdh5.1.0/hive-shims-common-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/shims/hive-shims-common-secure/0.12.0-cdh5.1.0/hive-shims-common-secure-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/shims/hive-shims-0.23/0.12.0-cdh5.1.0/hive-shims-0.23-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/google/guava/guava/11.0.2/guava-11.0.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/jolbox/bonecp/0.7.1.RELEASE/bonecp-0.7.1.RELEASE.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/derby/derby/10.4.2.0/derby-10.4.2.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/datanucleus/datanucleus-api-jdo/3.2.1/datanucleus-api-jdo-3.2.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/datanucleus/datanucleus-core/3.2.2/datanucleus-core-3.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/datanucleus/datanucleus-rdbms/3.2.1/datanucleus-rdbms-3.2.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/jdo/jdo-api/3.0.1/jdo-api-3.0.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/transaction/jta/1.1/jta-1.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/antlr/antlr-runtime/3.4/antlr-runtime-3.4.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/thrift/libfb303/0.9.0/libfb303-0.9.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-service/0.12.0-cdh5.1.0/hive-service-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/mortbay/jetty/jetty/6.1.26.cloudera.2/jetty-6.1.26.cloudera.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/mortbay/jetty/servlet-api/2.5-20081211/servlet-api-2.5-20081211.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/mortbay/jetty/jetty-util/6.1.26.cloudera.2/jetty-util-6.1.26.cloudera.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hive/hive-common/0.12.0-cdh5.1.0/hive-common-0.12.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/log4j/log4j/1.2.16/log4j-1.2.16.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/commons/commons-compress/1.4.1/commons-compress-1.4.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/tukaani/xz/1.0/xz-1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hadoop/hadoop-common/2.3.0-cdh5.1.0/hadoop-common-2.3.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hadoop/hadoop-annotations/2.3.0-cdh5.1.0/hadoop-annotations-2.3.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/opt/jdk1.8.0_11/lib/tools.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/commons/commons-math3/3.1.1/commons-math3-3.1.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/xmlenc/xmlenc/0.52/xmlenc-0.52.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-net/commons-net/3.1/commons-net-3.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/sun/jersey/jersey-core/1.9/jersey-core-1.9.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/sun/jersey/jersey-json/1.9/jersey-json-1.9.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/jettison/jettison/1.1/jettison-1.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/sun/xml/bind/jaxb-impl/2.2.3-1/jaxb-impl-2.2.3-1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/xml/bind/jaxb-api/2.2.2/jaxb-api-2.2.2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/jackson/jackson-jaxrs/1.8.3/jackson-jaxrs-1.8.3.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/jackson/jackson-xc/1.8.3/jackson-xc-1.8.3.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/sun/jersey/jersey-server/1.9/jersey-server-1.9.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/asm/asm/3.1/asm-3.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/tomcat/jasper-compiler/5.5.23/jasper-compiler-5.5.23.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/tomcat/jasper-runtime/5.5.23/jasper-runtime-5.5.23.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/javax/servlet/jsp/jsp-api/2.1/jsp-api-2.1.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-el/commons-el/1.0/commons-el-1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/net/java/dev/jets3t/jets3t/0.9.0/jets3t-0.9.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/jamesmurty/utils/java-xmlbuilder/0.4/java-xmlbuilder-0.4.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-digester/commons-digester/1.8/commons-digester-1.8.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/commons-beanutils/commons-beanutils-core/1.8.0/commons-beanutils-core-1.8.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.8.8/jackson-core-asl-1.8.8.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.8.8/jackson-mapper-asl-1.8.8.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/avro/avro/1.7.5-cdh5.1.0/avro-1.7.5-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/thoughtworks/paranamer/paranamer/2.3/paranamer-2.3.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/xerial/snappy/snappy-java/1.0.5/snappy-java-1.0.5.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/google/protobuf/protobuf-java/2.5.0/protobuf-java-2.5.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/hadoop/hadoop-auth/2.3.0-cdh5.1.0/hadoop-auth-2.3.0-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/directory/server/apacheds-kerberos-codec/2.0.0-M15/apacheds-kerberos-codec-2.0.0-M15.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/directory/server/apacheds-i18n/2.0.0-M15/apacheds-i18n-2.0.0-M15.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/directory/api/api-asn1-api/1.0.0-M20/api-asn1-api-1.0.0-M20.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/directory/api/api-util/1.0.0-M20/api-util-1.0.0-M20.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/org/apache/zookeeper/zookeeper/3.4.5-cdh5.1.0/zookeeper-3.4.5-cdh5.1.0.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+        <copy file="/home/grisha/.m2/repository/mysql/mysql-connector-java/5.1.6/mysql-connector-java-5.1.6.jar" todir="/home/grisha/misc/otterout/vydra_lib"/>
+    </target>
+</project>

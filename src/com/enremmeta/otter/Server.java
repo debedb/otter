@@ -62,8 +62,9 @@ public class Server implements Runnable {
 			Thread thread = new Thread(server);
 			thread.setName("BackendServer");
 			thread.start();
-			thread.join();
+
 			Logger.log("Ready...");
+			thread.join();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);

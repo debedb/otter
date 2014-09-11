@@ -347,6 +347,14 @@ public class Impala {
 		ps.execute();
 	}
 
+	public void drop(Dataset ds) throws SQLException {
+		Connection c = getConnection();
+		String sql = "DROP TABLE " + getTableName(ds) ;
+		PreparedStatement ps = c.prepareStatement(sql);
+		ps.execute();
+	}
+	
+	
 	public List<String> testCleanup() {
 		List<String> errors = new ArrayList<String>();
 		try {

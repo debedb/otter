@@ -84,10 +84,24 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 		}
 	}
 
+	private void dropDataset(IdMessage msg) throws Exception {
+		List<String> errs = imp.testCleanup();
+		String err2 = cdhc.testCleanup();
+		if (err2 != null) {
+			if (errs == null) {
+				errs = new ArrayList<String>();
+			}
+			errs.add(err2);
+		}
+	}
+
 	private Map<String, Class> opToArgs = new HashMap<String, Class>() {
 		{
 			put("fb.dataset_create", IdMessage.class);
 			put("dataset_create", IdMessage.class);
+			put("fb.dataset_drop", IdMessage.class);
+			put("dataset_drop", IdMessage.class);
+
 			put("fb.dataset_update", IdMessage.class);
 			put("dataset_update", IdMessage.class);
 			put("fb.dataset_load", DatasetLoadMessage.class);
@@ -158,6 +172,10 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 					Dataset ds = odb.getDataset(id);
 					cdhc.addDataset(ds);
 					imp.addDataset(ds);
+				} else if (op.equals("dataset_drop")) {
+					Dataset ds = odb.getDataset(id);
+					imp.drop(ds);
+					cdhc.drop(ds.getName());
 				} else if (op.equals("dataset_update")) {
 					Dataset ds = odb.getDataset(id);
 					imp.updateDataset(ds);
@@ -218,7 +236,7 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 
 				TaskInfoResultSaved resultSaving = new TaskInfoResultSaved();
 				taskStatus.setInfo(resultSaving);
-				
+
 				List<TableMetaData> resultTables = new ArrayList<TableMetaData>();
 				resultSaving.setResultTables(resultTables);
 
@@ -269,6 +287,12 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 
 		long id = -1;
 		if (op.equals("dataset_create")) {
+			if (msg instanceof IdMessage) {
+				return msg;
+			}
+			throw new BadRequestException("Invalid payload " + payload
+					+ " for command " + op);
+		} else if (op.equals("dataset_drop")) {
 			if (msg instanceof IdMessage) {
 				return msg;
 			}
