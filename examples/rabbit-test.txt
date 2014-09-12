@@ -1,5 +1,9 @@
 fb.test_cleanup
-
+{}
+fb.dataset_drop
+{ "id" : 1 }
+fb.dataset_create
+{ "id" : 1 }
 fb.dataset_drop
 { "id" : 6 }
 fb.dataset_create

@@ -31,8 +31,10 @@ public class Impala {
 		String retval = type;
 		if (type.equals("varchar")) {
 			retval = "string";
-		} else if (type.equals("datetime")) {
+		} else if (type.equalsIgnoreCase("datetime")) {
 			retval = "timestamp";
+		} else if (type.equalsIgnoreCase("")) {
+			
 		}
 		Logger.log("Replaced " + type + " with " + retval);
 		return retval;
@@ -45,12 +47,6 @@ public class Impala {
 	public Impala() {
 		super();
 		config = Config.getInstance();
-	}
-
-	private String getTableName(Dataset ds) {
-		String fqtn = config.getImpalaDbName() + "." + ds.getName();
-		// Cthulhu fqtn!
-		return fqtn;
 	}
 
 	// TODO partitioning...
@@ -79,17 +75,6 @@ public class Impala {
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 		getCount(config.getImpalaDbName() + "." + ds.getName());
-	}
-
-	public void updateDataset(Dataset ds) throws SQLException,
-			ClassNotFoundException {
-		Connection c = getConnection();
-		// Dropping external tables doesn't change anything...
-		PreparedStatement ps = c.prepareStatement("DROP TABLE "
-				+ getTableName(ds));
-		ps.execute();
-		addDataset(ds);
-		refreshTable(ds);
 	}
 
 	public List<String> buildPrepSql(Task task) throws OtterException {
@@ -234,6 +219,23 @@ public class Impala {
 		Logger.log("Connected to " + url + ".");
 	}
 
+	public void createDb(String name) throws SQLException, OtterException,
+			ClassNotFoundException {
+		Connection c = getConnection();
+		if (!name.matches("[A-Za-z][A-Za-z0-9]+")) {
+			throw new OtterException("Name not allowed: " + name);
+		}
+		PreparedStatement ps = c.prepareStatement("CREATE DATABASE " + name);
+		ps.execute();
+	}
+
+	public void drop(Dataset ds) throws SQLException {
+		Connection c = getConnection();
+		String sql = "DROP TABLE " + getTableName(ds) ;
+		PreparedStatement ps = c.prepareStatement(sql);
+		ps.execute();
+	}
+
 	// public void deleteDataset(String name) throws OtterException {
 	// try {
 	// Connection c = getConnection();
@@ -245,16 +247,6 @@ public class Impala {
 	// throw new OtterException(sqle);
 	// }
 	// }
-
-	public void createDb(String name) throws SQLException, OtterException,
-			ClassNotFoundException {
-		Connection c = getConnection();
-		if (!name.matches("[A-Za-z][A-Za-z0-9]+")) {
-			throw new OtterException("Name not allowed: " + name);
-		}
-		PreparedStatement ps = c.prepareStatement("CREATE DATABASE " + name);
-		ps.execute();
-	}
 
 	private Connection getConnection() throws SQLException {
 		if (con == null || con.isClosed()) {
@@ -299,6 +291,12 @@ public class Impala {
 			retval.add(row);
 		}
 		return retval;
+	}
+
+	private String getTableName(Dataset ds) {
+		String fqtn = config.getImpalaDbName() + "." + ds.getName();
+		// Cthulhu fqtn!
+		return fqtn;
 	}
 
 	public Map query(String query) throws SQLException {
@@ -347,14 +345,6 @@ public class Impala {
 		ps.execute();
 	}
 
-	public void drop(Dataset ds) throws SQLException {
-		Connection c = getConnection();
-		String sql = "DROP TABLE " + getTableName(ds) ;
-		PreparedStatement ps = c.prepareStatement(sql);
-		ps.execute();
-	}
-	
-	
 	public List<String> testCleanup() {
 		List<String> errors = new ArrayList<String>();
 		try {
@@ -402,5 +392,17 @@ public class Impala {
 			return null;
 		}
 		return errors;
+	}
+	
+	
+	public void updateDataset(Dataset ds) throws SQLException,
+			ClassNotFoundException {
+		Connection c = getConnection();
+		// Dropping external tables doesn't change anything...
+		PreparedStatement ps = c.prepareStatement("DROP TABLE "
+				+ getTableName(ds));
+		ps.execute();
+		addDataset(ds);
+		refreshTable(ds);
 	}
 }

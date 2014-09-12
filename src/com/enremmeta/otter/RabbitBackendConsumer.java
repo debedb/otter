@@ -12,6 +12,7 @@ import com.enremmeta.otter.entity.messages.DatasetError;
 import com.enremmeta.otter.entity.messages.DatasetLoadMessage;
 import com.enremmeta.otter.entity.messages.DatasetLoadSource;
 import com.enremmeta.otter.entity.messages.DatasetSuccess;
+import com.enremmeta.otter.entity.messages.EmptyMessage;
 import com.enremmeta.otter.entity.messages.IdMessage;
 import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.enremmeta.otter.entity.messages.TableMetaData;
@@ -108,8 +109,8 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 			put("dataset_load", DatasetLoadMessage.class);
 			put("fb.task_run", IdMessage.class);
 			put("task_run", IdMessage.class);
-			put("fb.test_cleanup", OtterMessage.class);
-			put("test_cleanup", OtterMessage.class);
+			put("fb.test_cleanup", EmptyMessage.class);
+			put("test_cleanup", EmptyMessage.class);
 
 		}
 	};
@@ -249,6 +250,10 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 				resultTable.setSize(3241241231l);
 
 				rabbit.send("bf.task_execution_status_notication", taskStatus);
+				
+				// TODO fake
+				taskStatus.setStatus("result_saved");
+				rabbit.send("bf.task_execution_status_notication", taskStatus);
 
 			} else {
 				throw new RuntimeException("Unexpected command " + op);
@@ -279,6 +284,9 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 			msg = null;
 		} else {
 			try {
+				if (payload.equals("{}")) {
+					Logger.log(payload);
+				}
 				msg = mapper.readValue(payload, klass);
 			} catch (IOException e1) {
 				throw new BadRequestException(e1);
@@ -350,6 +358,7 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 		if (direction.equals("fb")) {
 			OtterMessage msg = null;
 			try {
+				Logger.log(payload);
 				msg = parseOp(op, payload);
 				ch.basicAck(deliveryTag, false);
 			} catch (BadRequestException ioe) {
