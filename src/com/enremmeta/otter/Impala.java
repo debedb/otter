@@ -31,10 +31,11 @@ public class Impala {
 		String retval = type;
 		if (type.equals("varchar")) {
 			retval = "string";
-		} else if (type.equalsIgnoreCase("datetime")) {
+		} else if (type.equalsIgnoreCase("datetime")
+				|| type.equalsIgnoreCase("date")) {
 			retval = "timestamp";
-		} else if (type.equalsIgnoreCase("")) {
-			
+		} else if (type.equalsIgnoreCase("enum")) {
+			retval = "string";
 		}
 		Logger.log("Replaced " + type + " with " + retval);
 		return retval;
@@ -231,7 +232,7 @@ public class Impala {
 
 	public void drop(Dataset ds) throws SQLException {
 		Connection c = getConnection();
-		String sql = "DROP TABLE " + getTableName(ds) ;
+		String sql = "DROP TABLE " + getTableName(ds);
 		PreparedStatement ps = c.prepareStatement(sql);
 		ps.execute();
 	}
@@ -393,8 +394,7 @@ public class Impala {
 		}
 		return errors;
 	}
-	
-	
+
 	public void updateDataset(Dataset ds) throws SQLException,
 			ClassNotFoundException {
 		Connection c = getConnection();
