@@ -1,6 +1,6 @@
 package com.enremmeta.otter.entity.messages;
 
-public class DatasetLoadSource {
+public class DatasetLoadSource implements OtterMessage {
 
 	public DatasetLoadSource() {
 		// TODO Auto-generated constructor stub

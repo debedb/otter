@@ -13,7 +13,9 @@ import com.enremmeta.otter.entity.messages.DatasetLoadMessage;
 import com.enremmeta.otter.entity.messages.DatasetLoadSource;
 import com.enremmeta.otter.entity.messages.DatasetSuccess;
 import com.enremmeta.otter.entity.messages.EmptyMessage;
+import com.enremmeta.otter.entity.messages.Field;
 import com.enremmeta.otter.entity.messages.IdMessage;
+import com.enremmeta.otter.entity.messages.MetaResult;
 import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.enremmeta.otter.entity.messages.TableMetaData;
 import com.enremmeta.otter.entity.messages.TaskInfoResultSaved;
@@ -253,6 +255,19 @@ public class RabbitBackendConsumer extends DefaultConsumer {
 				
 				// TODO fake
 				taskStatus.setStatus("result_saved");
+				
+				MetaResult metaResult = new MetaResult();
+				metaResult.setTableName("result1");
+				Field f1 = new Field();
+				f1.setName("name");
+				f1.setType("string");
+				metaResult.getFields().add(f1);
+				Field f2 = new Field();
+				f2.setName("value");
+				f2.setType("string");
+				metaResult.getFields().add(f2);
+				taskStatus.setMetaResult(metaResult);
+				
 				rabbit.send("bf.task_execution_status_notication", taskStatus);
 
 			} else {

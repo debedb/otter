@@ -2,7 +2,7 @@ package com.enremmeta.otter.entity.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TaskStatusMessage  implements OtterMessage {
+public class TaskStatusMessage implements OtterMessage {
 
 	public long getTaskId() {
 		return taskId;
@@ -16,6 +16,17 @@ public class TaskStatusMessage  implements OtterMessage {
 		// TODO Auto-generated constructor stub
 	}
 
+	@JsonProperty("meta_result")
+	private MetaResult metaResult;
+
+	public MetaResult getMetaResult() {
+		return metaResult;
+	}
+
+	public void setMetaResult(MetaResult metaResult) {
+		this.metaResult = metaResult;
+	}
+
 	private String status;
 
 	private TaskInfo info;
@@ -25,7 +36,7 @@ public class TaskStatusMessage  implements OtterMessage {
 
 	@JsonProperty("task_id")
 	private long taskId;
-	
+
 	@JsonProperty("workflow_id")
 	private long workflowId;
 

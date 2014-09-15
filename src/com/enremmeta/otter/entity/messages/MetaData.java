@@ -2,7 +2,7 @@ package com.enremmeta.otter.entity.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class MetaData {
+public class MetaData implements OtterMessage {
 
 	public MetaData() {
 		// TODO Auto-generated constructor stub
