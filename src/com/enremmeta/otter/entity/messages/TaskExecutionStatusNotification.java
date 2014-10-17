@@ -2,7 +2,7 @@ package com.enremmeta.otter.entity.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TaskStatusMessage implements OtterMessage {
+public class TaskExecutionStatusNotification implements OtterMessage {
 
 	public long getTaskId() {
 		return taskId;
@@ -12,7 +12,7 @@ public class TaskStatusMessage implements OtterMessage {
 		this.taskId = taskId;
 	}
 
-	public TaskStatusMessage() {
+	public TaskExecutionStatusNotification() {
 		// TODO Auto-generated constructor stub
 	}
 

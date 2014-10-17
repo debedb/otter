@@ -2,6 +2,8 @@ package com.enremmeta.otter;
 
 import java.io.File;
 
+import com.enremmeta.otter.rabbit.Rabbit;
+import com.enremmeta.otter.rabbit.RabbitConsumer;
 import com.rabbitmq.client.Channel;
 
 public class Server implements Runnable {
@@ -51,7 +53,7 @@ public class Server implements Runnable {
 
 			Rabbit consumerRabbit = new Rabbit();
 			consumerRabbit.connect();
-			RabbitBackendConsumer consumer = new RabbitBackendConsumer(
+			RabbitConsumer consumer = new RabbitConsumer(
 					consumerRabbit);
 			consumer.connect();
 			Channel backendChannel = consumerRabbit.getChannel();

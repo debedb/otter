@@ -10,13 +10,13 @@ import java.util.List;
 import com.enremmeta.otter.Config;
 import com.enremmeta.otter.Logger;
 import com.enremmeta.otter.OtterException;
-import com.enremmeta.otter.Rabbit;
+import com.enremmeta.otter.rabbit.Rabbit;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-public class RabbitFrontend implements Runnable {
+public class TestRabbit implements Runnable {
 
 	public static List<String[]> TEST_COMMANDS = new ArrayList<String[]>();
 
@@ -60,7 +60,7 @@ public class RabbitFrontend implements Runnable {
 		}
 	}
 
-	public RabbitFrontend(boolean reader) {
+	public TestRabbit(boolean reader) {
 		super();
 		this.reader = reader;
 	}
@@ -133,7 +133,7 @@ public class RabbitFrontend implements Runnable {
 		// Kick this off...
 		fRabbit.send("fb.test_cleanup", "");
 
-		RabbitFrontend f = new RabbitFrontend(false);
+		TestRabbit f = new TestRabbit(false);
 		f.connect();
 		Thread t = new Thread(f);
 		t.setName("Frontend");

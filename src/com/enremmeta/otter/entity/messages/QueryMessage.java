@@ -1,4 +1,4 @@
-package com.enremmeta.otter.entity;
+package com.enremmeta.otter.entity.messages;
 
 import java.io.Serializable;
 
@@ -8,13 +8,13 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 
 @XmlRootElement
 @JsonRootName(value = "")
-public class Query implements Serializable {
+public class QueryMessage implements OtterMessage {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -7393306828674490788L;
 
-	public Query() {
+	public QueryMessage() {
 		super();
 	}
 

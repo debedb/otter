@@ -1,4 +1,4 @@
-package com.enremmeta.otter;
+package com.enremmeta.otter.rest;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -6,6 +6,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
+import com.enremmeta.otter.OtterException;
 
 @Provider
 public class OtterExceptionMapper implements ExceptionMapper<OtterException> {

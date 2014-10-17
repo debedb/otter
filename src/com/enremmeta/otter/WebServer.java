@@ -9,7 +9,11 @@ import org.glassfish.jersey.server.ServerProperties;
 
 public class WebServer {
 
-	public static final Impala impala = new Impala();
+	public static Workhorse getWorkhorse() {
+		return workhorse;
+	}
+
+	private static final Workhorse workhorse = new Workhorse(null);
 
 	public static Server startServer() throws Exception {
 		Config config = Config.getInstance();
@@ -32,8 +36,8 @@ public class WebServer {
 		jerseyServlet.setInitParameter(
 				"com.sun.jersey.api.json.POJOMappingFeature", "true");
 
-		// server.setHandler(new Main());
-		impala.connect();
+		workhorse.connect();
+
 		server.start();
 		Logger.log("Listening on " + port + "...");
 		return server;

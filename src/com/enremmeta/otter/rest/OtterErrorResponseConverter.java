@@ -1,6 +1,8 @@
-package com.enremmeta.otter;
+package com.enremmeta.otter.rest;
 
 import javax.xml.bind.annotation.XmlRootElement;
+
+import com.enremmeta.otter.OtterException;
 
 @XmlRootElement
 public class OtterErrorResponseConverter {

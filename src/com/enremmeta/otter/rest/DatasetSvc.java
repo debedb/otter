@@ -1,4 +1,4 @@
-package com.enremmeta.otter.jersey;
+package com.enremmeta.otter.rest;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

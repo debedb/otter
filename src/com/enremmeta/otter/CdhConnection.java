@@ -158,9 +158,8 @@ public class CdhConnection {
 		// exec 'scp -t rfile' remotely
 
 		Channel channel = sess.openChannel("exec");
+		channel.setInputStream(null);
 		((ChannelExec) channel).setCommand(cmd);
-
-		OutputStream curOut = channel.getOutputStream();
 		InputStream curIn = channel.getInputStream();
 		channel.connect();
 		byte[] tmp = new byte[1024];

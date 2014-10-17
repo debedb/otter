@@ -1,4 +1,4 @@
-package com.enremmeta.otter.jersey;
+package com.enremmeta.otter.rest;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -14,16 +14,16 @@ import javax.ws.rs.core.MediaType;
 import com.enremmeta.otter.Constants;
 import com.enremmeta.otter.OtterException;
 import com.enremmeta.otter.WebServer;
-import com.enremmeta.otter.entity.Query;
+import com.enremmeta.otter.entity.messages.QueryMessage;
 
 @Path("/")
 public class Misc {
-	
+
 	public Misc() {
 		super();
-		
+
 	}
-	
+
 	@GET
 	@Path("")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -32,19 +32,18 @@ public class Misc {
 		map.put("version", Constants.VERSION);
 		return map;
 	}
-	
+
 	@POST
 	@Path("query")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Map query(Query q) throws OtterException {
+	public Map query(QueryMessage q) throws OtterException {
 		try {
-			String query = q.getQuery();
 			Map map = new HashMap();
-			map = WebServer.impala.query(query);
+			map = WebServer.getWorkhorse().query(q);
 			return map;
-		} catch (SQLException sqle) {
-			throw new OtterException(sqle);
+		} catch (Exception e) {
+			throw new OtterException(e);
 		}
 	}
 

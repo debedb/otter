@@ -29,7 +29,7 @@ import com.enremmeta.otter.Logger;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class RestFrontend {
+public class TestRest {
 
 	private static Object runCommand(String jsonFilename, String id)
 			throws Exception {

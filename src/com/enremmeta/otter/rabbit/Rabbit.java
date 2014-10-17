@@ -1,7 +1,10 @@
-package com.enremmeta.otter;
+package com.enremmeta.otter.rabbit;
 
 import java.io.IOException;
 
+import com.enremmeta.otter.Config;
+import com.enremmeta.otter.Logger;
+import com.enremmeta.otter.OtterException;
 import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser.Feature;

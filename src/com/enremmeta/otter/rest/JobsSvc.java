@@ -1,4 +1,4 @@
-package com.enremmeta.otter.jersey;
+package com.enremmeta.otter.rest;
 
 import java.util.HashMap;
 import java.util.Map;
