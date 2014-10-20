@@ -40,8 +40,6 @@ public class BadRequestException extends Exception {
 	
 	private String entity;
 	
-	
-
 	public String getEntity() {
 		return entity;
 	}

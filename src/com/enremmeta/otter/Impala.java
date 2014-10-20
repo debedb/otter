@@ -20,6 +20,7 @@ import com.enremmeta.otter.entity.TaskDataSetModifier;
 import com.enremmeta.otter.entity.TaskDataSetModifierGroup;
 import com.enremmeta.otter.entity.TaskDataSetModifierSort;
 import com.enremmeta.otter.entity.TaskDataSetProperty;
+import com.enremmeta.otter.entity.messages.Field;
 
 public class Impala {
 
@@ -78,29 +79,67 @@ public class Impala {
 		getCount(config.getImpalaDbName() + "." + ds.getName());
 	}
 
-	public List<String> buildPrepSql(Task task) throws OtterException {
-		List<String> retval = new ArrayList<String>();
+	public long runWorkflow(WorkflowMetaData wfmd) throws Exception {
+		String sql = wfmd.getSql();
+		Connection c = getConnection();
+
+		PreparedStatement ps = c.prepareStatement(sql);
+		ps.execute();
+		long result = getCount(config.getImpalaDbName() + "."
+				+ wfmd.getMetaResult().getTableName());
+		return result;
+	}
+
+	public List<WorkflowMetaData> buildWorkflow(Task task, String workflowId)
+			throws OtterException {
+
+		List<WorkflowMetaData> retval = new ArrayList<WorkflowMetaData>();
+		String fromClause = "";
+		List<String> tables = new ArrayList<String>();
+		int tdsCnt = 0;
 		for (Long tdsId : task.getDatasets().keySet()) {
+			tdsCnt++;
+			String outTableName = "task_" + task.getId() + "_wf_" + workflowId
+					+ "_ds_" + tdsCnt + "_x_" + System.currentTimeMillis();
+			WorkflowMetaData wfmd = new WorkflowMetaData();
+			wfmd.getMetaResult().setTableName(outTableName);
+			wfmd.getMetaData().setName(outTableName);
+
 			String sql = "";
 			TaskDataSet tds = task.getDatasets().get(tdsId);
-			String tableName = "";
 
 			boolean firstFilter = false;
 			String whereClause = "";
 			String selectClause = "";
-
+			int fieldsCount = 0;
 			List<TaskDataSetModifier> modifiers = tds.getModifiers();
+
+			List<Field> fields = new ArrayList<Field>();
+			wfmd.getMetaResult().setFields(fields);
+
 			if (modifiers.size() > 0) {
 				for (TaskDataSetModifier modifier : modifiers) {
 					String exp = modifier.getExpression();
 					String alias = modifier.getAlias();
 					TaskDataSetProperty tdsp = modifier.getProperty();
-					tableName = tdsp.getTableName();
+					String tableName = tdsp.getTableName();
 					if (selectClause.length() > 0) {
 						selectClause += ", ";
 					}
-					selectClause += exp + "(" + tdsp.getTableName() + "."
-							+ tdsp.getUniversalName() + ") " + alias;
+					String colTableName = tdsp.getTableName();
+					selectClause += exp + "(" + config.getImpalaDbName() + "."
+							+ colTableName + "." + tdsp.getUniversalName()
+							+ ") " + alias;
+
+					Field f = new Field();
+					f.setName(alias);
+					f.setType(tdsp.getUniversalType());
+					fields.add(f);
+
+					if (!tables.contains(colTableName)) {
+						tables.add(colTableName);
+					}
+					fieldsCount++;
 				}
 			} else {
 				for (TaskDataSetProperty field : tds.getFields()) {
@@ -108,17 +147,28 @@ public class Impala {
 						selectClause += ", ";
 					}
 
-					selectClause += field.getTableName() + "."
+					Field f = new Field();
+					f.setName(field.getUniversalName());
+					f.setType(field.getUniversalType());
+					fields.add(f);
+
+					selectClause += config.getImpalaDbName() + "."
+							+ field.getTableName() + "."
 							+ field.getUniversalName();
+					String colTableName = field.getTableName();
+					if (!tables.contains(colTableName)) {
+						tables.add(colTableName);
+					}
+					fieldsCount++;
 				}
 			}
 
-			String fromClause = "";
+			wfmd.getMetaData().setFieldsCount(fieldsCount);
 
 			for (TaskDataSetFilter filter : tds.getFilters()) {
 				String filterType = filter.getType();
 				TaskDataSetProperty prop = filter.getTaskDataSetProperty();
-				tableName = prop.getTableName();
+				String tableName = prop.getTableName();
 
 				String operator = " = ";
 				String exp = filter.getExpression();
@@ -168,7 +218,7 @@ public class Impala {
 			String groupByClause = "";
 			for (TaskDataSetModifierGroup group : tds.getGroups()) {
 				TaskDataSetProperty prop = group.getProperty();
-				tableName = prop.getTableName();
+				String tableName = prop.getTableName();
 				if (groupByClause.length() > 0) {
 					groupByClause += ", ";
 				}
@@ -179,14 +229,17 @@ public class Impala {
 			for (TaskDataSetModifierSort sort : tds.getSorts()) {
 				TaskDataSetProperty prop = sort.getProperty();
 				String dir = sort.getDirection();
-				tableName = prop.getTableName();
+				String tableName = prop.getTableName();
 				if (orderByClause.length() > 0) {
 					orderByClause += ", ";
 				}
 				orderByClause += tableName + "." + prop.getUniversalName()
 						+ " " + dir;
 			}
-
+			if (tables.size() > 1) {
+				throw new OtterException("Joins unsupported yet.");
+			}
+			fromClause = config.getImpalaDbName() + "." + tables.get(0);
 			sql = "SELECT " + selectClause + " FROM " + fromClause;
 			if (whereClause.length() > 0) {
 				sql += " WHERE " + whereClause;
@@ -199,7 +252,10 @@ public class Impala {
 			if (orderByClause.length() > 0) {
 				sql += " ORDER BY " + orderByClause;
 			}
-			retval.add(sql);
+			sql = "CREATE TABLE " + config.getImpalaDbName() + "." + outTableName
+					+ " AS " + sql;
+			wfmd.setSql(sql);
+			retval.add(wfmd);
 		}
 		return retval;
 	}

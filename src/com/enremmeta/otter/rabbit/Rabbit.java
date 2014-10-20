@@ -9,6 +9,7 @@ import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -61,6 +62,7 @@ public class Rabbit {
 		JsonFactory jsonFactory = new JsonFactory();
 		jsonFactory.configure(Feature.ALLOW_SINGLE_QUOTES, true);
 		mapper = new ObjectMapper(jsonFactory);
+		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 	}
 
 	private String exchange;

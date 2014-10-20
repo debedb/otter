@@ -58,8 +58,7 @@ public class OfficeDb {
 			+ "tdsf.type FilterType, "
 			+ "tdsf.expression FilterExp, "
 			+ "tdsf.value FilterValue, "
-			+ "tdsf.is_parameter FilterIsParam, "
-			+ "tdsf.parameter_name FilterParamName, "
+			+ "tdsf.parameter_id FilterParamId, "
 			+ "tdsp.id TdspId, "
 			+ "tdsp.alias PropAlias, "
 			+ " up.title UniversalPropertyTitle, "
@@ -123,7 +122,7 @@ public class OfficeDb {
 			+ " WHERE "
 			+ " tds.task_id = ? ORDER BY tds.id, tdsmg.id, up.id, us.id";
 
-	private static final String TASK_ALGORITHM_SQL = "SELECT a.id AlgId, a.name AlgName,  a.process AlgProcess, a.fields AlgFields "
+	private static final String TASK_ALGORITHM_SQL = "SELECT a.id AlgId, a.name AlgName,  a.process AlgProcess "
 			+ " FROM algorithm a "
 			+ " JOIN task_algorithm ta ON a.id = ta.algorithm_id"
 			+ " JOIN task t ON t.id = ta.task_id " + " WHERE t.id = ?";
@@ -196,6 +195,7 @@ public class OfficeDb {
 			alg.setName(rs.getString("AlgName"));
 
 			alg.setProcess(rs.getString("AlgProcess"));
+			t.setAlgorithm(alg);
 		}
 
 	}
@@ -364,8 +364,7 @@ public class OfficeDb {
 				tdsf.setType(rs.getString("FilterType"));
 				tdsf.setExpression(rs.getString("FilterExp"));
 				tdsf.setValue(rs.getString("FilterValue"));
-				tdsf.setParameter(rs.getBoolean("FilterIsParam"));
-				tdsf.setParameterName(rs.getString("FilterParamName"));
+				tdsf.setParameterId(rs.getInt("FilterParamId"));
 				tds.getFilters().add(tdsf);
 
 				TaskDataSetProperty tdsp = loadProperty(rs);
@@ -377,7 +376,7 @@ public class OfficeDb {
 		}
 	}
 
-	public Task getTask(int id) throws OtterException {
+	public Task getTask(long id) throws OtterException {
 		Task t = new Task();
 		t.setId(id);
 		try {

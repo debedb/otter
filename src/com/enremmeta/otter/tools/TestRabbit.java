@@ -111,7 +111,7 @@ public class TestRabbit implements Runnable {
 		File testData = new File(args[0]);
 		loadTestData(testData);
 
-		File configFile = new File("config/otter.properties");
+		File configFile = new File("config/otter1.properties");
 		if (args.length == 1) {
 			Logger.log("Assuming config in " + configFile.getAbsolutePath());
 		} else {
@@ -126,17 +126,18 @@ public class TestRabbit implements Runnable {
 
 		Rabbit fRabbit = new Rabbit();
 		fRabbit.connect();
-		Channel frontendChannel = fRabbit.getChannel();
 		FrontendConsumer consumer = new FrontendConsumer(fRabbit);
 		fRabbit.getChannel().basicConsume(fRabbit.getQueueOut(), consumer);
 
 		// Kick this off...
-		fRabbit.send("fb.test_cleanup", "");
+//		fRabbit.send("fb.test_cleanup", "");
+		fRabbit.send("fb.noop", "");
 
 		TestRabbit f = new TestRabbit(false);
 		f.connect();
 		Thread t = new Thread(f);
 		t.setName("Frontend");
 		t.start();
+		t.join();
 	}
 }

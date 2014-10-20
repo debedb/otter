@@ -1,5 +1,7 @@
 package com.enremmeta.otter.entity.messages;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TaskExecutionStatusNotification implements OtterMessage {
@@ -17,13 +19,14 @@ public class TaskExecutionStatusNotification implements OtterMessage {
 	}
 
 	@JsonProperty("meta_result")
-	private MetaResult metaResult;
+	private List<MetaResult> metaResult;
 
-	public MetaResult getMetaResult() {
+
+	public List<MetaResult> getMetaResult() {
 		return metaResult;
 	}
 
-	public void setMetaResult(MetaResult metaResult) {
+	public void setMetaResult(List<MetaResult> metaResult) {
 		this.metaResult = metaResult;
 	}
 
@@ -71,4 +74,5 @@ public class TaskExecutionStatusNotification implements OtterMessage {
 	public void setWorkflowId(long workflowId) {
 		this.workflowId = workflowId;
 	}
+
 }

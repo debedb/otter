@@ -11,30 +11,30 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 public class TaskDataSetFilter implements Serializable {
 
 	private String expression;
-	
+
 	private String type;
-	
+
 	private String value;
-	
+
 	private String isNotNull;
-	
+
 	private String connectOperator;
-	
-	private boolean isParameter;
-	
+
+	private int parameterId;
+
 	private TaskDataSet taskDataSet;
-	
+
 	private TaskDataSetProperty taskDataSetProperty;
-	
+
 	public TaskDataSetFilter() {
 		super();
 	}
-	
+
 	public TaskDataSetFilter(long id) {
 		super();
 		this.id = id;
 	}
-	
+
 	public String getExpression() {
 		return expression;
 	}
@@ -75,12 +75,12 @@ public class TaskDataSetFilter implements Serializable {
 		this.connectOperator = connectOperator;
 	}
 
-	public boolean isParameter() {
-		return isParameter;
+	public int getParameterId() {
+		return parameterId;
 	}
 
-	public void setParameter(boolean isParameter) {
-		this.isParameter = isParameter;
+	public void setParameterId(int parameterId) {
+		this.parameterId = parameterId;
 	}
 
 	public String getParameterName() {
@@ -92,7 +92,7 @@ public class TaskDataSetFilter implements Serializable {
 	}
 
 	private String parameterName;
-	
+
 	private long id;
 
 	public TaskDataSet getTaskDataSet() {
@@ -118,5 +118,5 @@ public class TaskDataSetFilter implements Serializable {
 	public void setId(long id) {
 		this.id = id;
 	}
-	
+
 }

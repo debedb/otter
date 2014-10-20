@@ -9,15 +9,15 @@ public class TaskInfoResultSaved extends TaskInfo {
 	public TaskInfoResultSaved() {
 		// TODO Auto-generated constructor stub
 	}
-	
-	@JsonProperty("result_tables")
-	private List<TableMetaData> resultTables;
 
-	public List<TableMetaData> getResultTables() {
+	@JsonProperty("result_tables")
+	private List<MetaData> resultTables;
+
+	public List<MetaData> getResultTables() {
 		return resultTables;
 	}
 
-	public void setResultTables(List<TableMetaData> resultTables) {
+	public void setResultTables(List<MetaData> resultTables) {
 		this.resultTables = resultTables;
 	}
 

@@ -9,22 +9,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.enremmeta.otter.entity.Algorithm;
 import com.enremmeta.otter.entity.Dataset;
-import com.enremmeta.otter.entity.messages.DatasetError;
+import com.enremmeta.otter.entity.Task;
+import com.enremmeta.otter.entity.TaskDataSet;
 import com.enremmeta.otter.entity.messages.DatasetLoadMessage;
 import com.enremmeta.otter.entity.messages.DatasetLoadSource;
-import com.enremmeta.otter.entity.messages.DatasetSuccess;
 import com.enremmeta.otter.entity.messages.EmptyMessage;
-import com.enremmeta.otter.entity.messages.Field;
 import com.enremmeta.otter.entity.messages.IdMessage;
+import com.enremmeta.otter.entity.messages.MetaData;
 import com.enremmeta.otter.entity.messages.MetaResult;
 import com.enremmeta.otter.entity.messages.OtterMessage;
 import com.enremmeta.otter.entity.messages.QueryMessage;
-import com.enremmeta.otter.entity.messages.TableMetaData;
-import com.enremmeta.otter.entity.messages.TaskInfoResultSaved;
+import com.enremmeta.otter.entity.messages.StatusMessage;
 import com.enremmeta.otter.entity.messages.TaskExecutionStatusNotification;
+import com.enremmeta.otter.entity.messages.TaskInfoError;
+import com.enremmeta.otter.entity.messages.TaskInfoResultSaved;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.Message;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * What's another animal, Otter, Rabbit. The purpose of this
@@ -41,9 +43,11 @@ public class Workhorse {
 	public Workhorse(AsyncStatusHandler asyncStatusHandler) {
 		super();
 		this.asyncStatusHandler = asyncStatusHandler;
+		mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 	}
 
-	private ObjectMapper mapper = new ObjectMapper();
+	private ObjectMapper mapper;
 
 	public void connect() throws OtterException {
 		try {
@@ -61,7 +65,9 @@ public class Workhorse {
 		return map;
 	}
 
-	public OtterMessage dispatch(String op, String payload) throws Throwable {
+	public OtterMessage dispatch(String op, String payload)
+			throws BadRequestException, InvocationTargetException {
+
 		if (payload != null) {
 			payload = payload.trim();
 			if (payload.length() == 0) {
@@ -91,6 +97,9 @@ public class Workhorse {
 
 				Object val = null;
 				if (payload != null) {
+					if (paramTypes.length == 0) {
+						continue;
+					}
 					try {
 						val = mapper.readValue(payload, paramTypes[0]);
 					} catch (IOException jme) {
@@ -108,9 +117,7 @@ public class Workhorse {
 					}
 					return retval;
 				} catch (IllegalAccessException | IllegalArgumentException e) {
-					throw new OtterException(e);
-				} catch (InvocationTargetException e2) {
-					throw new TargetException(e2.getTargetException());
+					throw new BadRequestException(e);
 				}
 			}
 		}
@@ -195,20 +202,35 @@ public class Workhorse {
 	}
 
 	public OtterMessage testCleanup() throws Exception {
-		List<String> errs = imp.testCleanup();
-		String err2 = cdhc.testCleanup();
-		if (err2 != null) {
-			if (errs == null) {
-				errs = new ArrayList<String>();
+		StatusMessage sm = new StatusMessage();
+		try {
+			List<String> errs = imp.testCleanup();
+			String err2 = cdhc.testCleanup();
+			if (err2 != null) {
+				if (errs == null) {
+					errs = new ArrayList<String>();
+				}
+				errs.add(err2);
 			}
-			errs.add(err2);
+			sm.setStatus(true);
+		} catch (Exception e) {
+			sm.setStatus(false);
+			sm.setError(e.getMessage());
 		}
+		return sm;
+	}
+
+	public OtterMessage noop() {
 		return new EmptyMessage();
 	}
 
+	private long workflowId = 1;
+
 	public OtterMessage taskRun(IdMessage msg) throws Exception {
-		long workflowId = 23;
+		workflowId++;
 		long id = msg.getId();
+
+		// Step 1. Send that we started
 		TaskExecutionStatusNotification taskStatus = new TaskExecutionStatusNotification();
 		taskStatus.setTaskId(id);
 		taskStatus.setStatus("started");
@@ -216,43 +238,100 @@ public class Workhorse {
 		taskStatus.setTimestamp(System.currentTimeMillis());
 		asyncStatusHandler.handle(taskStatus);
 
-		taskStatus = new TaskExecutionStatusNotification();
-		taskStatus.setTaskId(id);
-		taskStatus.setStatus("result_saving");
-		taskStatus.setWorkflowId(workflowId);
-		taskStatus.setTimestamp(System.currentTimeMillis());
+		Task task = null;
 
-		TaskInfoResultSaved resultSaving = new TaskInfoResultSaved();
-		taskStatus.setInfo(resultSaving);
+		try {
+			task = odb.getTask(id);
+		} catch (OtterException e) {
+			TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+			errStatus.setTaskId(id);
+			errStatus.setStatus("error");
+			errStatus.setWorkflowId(workflowId);
+			errStatus.setTimestamp(System.currentTimeMillis());
+			TaskInfoError errInfo = new TaskInfoError();
+			errInfo.setError(e.getMessage());
+			errStatus.setInfo(errInfo);
+			return errStatus;
+		}
 
-		List<TableMetaData> resultTables = new ArrayList<TableMetaData>();
-		resultSaving.setResultTables(resultTables);
+		Algorithm alg = task.getAlgorithm();
+		if (alg == null) {
+			TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+			errStatus.setTaskId(id);
+			errStatus.setStatus("error");
+			errStatus.setWorkflowId(workflowId);
+			errStatus.setTimestamp(System.currentTimeMillis());
+			TaskInfoError errInfo = new TaskInfoError();
+			errInfo.setError("No algorithm found.");
+			errStatus.setInfo(errInfo);
+			return errStatus;
+		}
+		if (!"copy".equalsIgnoreCase(alg.getName())) {
+			TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+			errStatus.setTaskId(id);
+			errStatus.setStatus("error");
+			errStatus.setWorkflowId(workflowId);
+			errStatus.setTimestamp(System.currentTimeMillis());
+			TaskInfoError errInfo = new TaskInfoError();
+			errInfo.setError("Algorithm not yet supported: " + alg.getName());
+			errStatus.setInfo(errInfo);
+			return errStatus;
+		}
 
-		TableMetaData resultTable = new TableMetaData();
-		resultTables.add(resultTable);
+		Map<Long, TaskDataSet> datasets = task.getDatasets();
+		List<WorkflowMetaData> wfs = imp.buildWorkflow(task,
+				String.valueOf(workflowId));
 
-		resultTable.setFieldsCount(37);
-		resultTable.setName("customers");
-		resultTable.setRowsCount(1100000000);
-		resultTable.setSize(3241241231l);
+		List<MetaData> resultTables = new ArrayList<MetaData>();
+		
+		// Prepare
+		for (WorkflowMetaData wf : wfs) {
+			resultTables.add(wf.getMetaData());
+		}
 
-		asyncStatusHandler.handle(taskStatus);
-
-		// TODO fake
-		taskStatus.setStatus("result_saved");
-
-		MetaResult metaResult = new MetaResult();
-		metaResult.setTableName("result1");
-		Field f1 = new Field();
-		f1.setName("name");
-		f1.setType("string");
-		metaResult.getFields().add(f1);
-		Field f2 = new Field();
-		f2.setName("value");
-		f2.setType("string");
-		metaResult.getFields().add(f2);
-		taskStatus.setMetaResult(metaResult);
-		return taskStatus;
+		TaskExecutionStatusNotification savingStatus = new TaskExecutionStatusNotification();
+		savingStatus.setTaskId(id);
+		savingStatus.setStatus("result_saving");
+		savingStatus.setWorkflowId(workflowId);
+		savingStatus.setTimestamp(System.currentTimeMillis());
+		TaskInfoResultSaved infoSaving = new TaskInfoResultSaved();
+		savingStatus.setInfo(infoSaving);
+		infoSaving.setResultTables(resultTables);
+		asyncStatusHandler.handle(savingStatus);
+		
+		// Now, run..
+		TaskExecutionStatusNotification savedStatus = new TaskExecutionStatusNotification();
+		savingStatus.setTaskId(id);
+		savingStatus.setStatus("result_saved");
+		savingStatus.setWorkflowId(workflowId);
+		TaskInfoResultSaved infoSaved = new TaskInfoResultSaved();
+		savedStatus.setInfo(infoSaved);
+		
+		List<MetaResult> metaResult = new ArrayList<MetaResult>();
+		savedStatus.setMetaResult(metaResult);
+		
+		List<MetaData> resultTables2 = new ArrayList<MetaData>();
+		infoSaved.setResultTables(resultTables2);
+		
+		for (WorkflowMetaData wf : wfs) {
+			try {
+				long cnt = imp.runWorkflow(wf);
+				wf.getMetaData().setRowsCount(cnt);
+				resultTables2.add(wf.getMetaData());
+				metaResult.add(wf.getMetaResult());
+			} catch (Exception e) {
+				TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+				errStatus.setTaskId(id);
+				errStatus.setStatus("error");
+				errStatus.setWorkflowId(workflowId);
+				errStatus.setTimestamp(System.currentTimeMillis());
+				TaskInfoError errInfo = new TaskInfoError();
+				errInfo.setError(e.getMessage());
+				errStatus.setInfo(errInfo);
+				asyncStatusHandler.handle(errStatus);
+			}
+		}
+		return savedStatus;
 	}
 
 	public OtterMessage datasetUpdate(IdMessage msg) throws Exception {

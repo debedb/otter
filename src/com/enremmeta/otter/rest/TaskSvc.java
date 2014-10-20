@@ -31,7 +31,7 @@ public class TaskSvc {
 
 		// Do filter, but tihs is confusing.
 		// Bit of a hack for now
-		List<String> sqls = imp.buildPrepSql(task);
+//		List<String> sqls = imp.buildPrepSql(task);
 		// retval.put("sql", sql);
 		//
 		// Map rs = impala.query(sql);

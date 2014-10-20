@@ -38,5 +38,15 @@ public class MetaData implements OtterMessage {
 	@JsonProperty("rows_count")
 	private long rowsCount;
 	
+	private String name;
+	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	private long size;
 }
