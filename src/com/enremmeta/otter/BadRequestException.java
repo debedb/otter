@@ -4,62 +4,65 @@ import java.sql.SQLException;
 
 public class BadRequestException extends Exception {
 
-	/**
+    /**
 	 * 
 	 */
-	private static final long serialVersionUID = -6249070698994894876L;
-	private int status = 500;
-	
-	public int getStatus()  {
-		return status;
-	}
-	
-	public void setStatus(int status) {
-		this.status = status;
-	}
-	
-	public BadRequestException() {
-		super();
-	}
+    private static final long serialVersionUID = -6249070698994894876L;
+    private int status = 500;
 
-	public BadRequestException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-		
-	}
+    public int getStatus() {
+	return status;
+    }
 
-	public BadRequestException(String message, Throwable cause) {
-		super(message, cause);
-		// TODO Auto-generated constructor stub
-	}
+    public void setStatus(int status) {
+	this.status = status;
+    }
 
-	public BadRequestException(String message) {
-		super(message);
-		// TODO Auto-generated constructor stub
-	}
-	
-	private String entity;
-	
-	public String getEntity() {
-		return entity;
-	}
+    public BadRequestException() {
+	super();
+    }
 
-	public void setEntity(String entity) {
-		this.entity = entity;
-	}
+    public BadRequestException(
+	    String message,
+	    Throwable cause,
+	    boolean enableSuppression,
+	    boolean writableStackTrace) {
+	super(message, cause, enableSuppression, writableStackTrace);
 
-	public BadRequestException(Throwable cause) {
-		super(cause);
-		if (cause instanceof SQLException) {
-			SQLException sqle = (SQLException) cause;
-			String msg = sqle.getMessage();
-			String errTxt = "AnalysisException: Table already exists: ";
-			if (msg.startsWith(errTxt)) {
-				// Conflict
-				status = 409;
-				entity = msg.replace(errTxt, "");
-			}
-		}
+    }
+
+    public BadRequestException(String message, Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    public BadRequestException(String message) {
+	super(message);
+	// TODO Auto-generated constructor stub
+    }
+
+    private String entity;
+
+    public String getEntity() {
+	return entity;
+    }
+
+    public void setEntity(String entity) {
+	this.entity = entity;
+    }
+
+    public BadRequestException(Throwable cause) {
+	super(cause);
+	if (cause instanceof SQLException) {
+	    SQLException sqle = (SQLException) cause;
+	    String msg = sqle.getMessage();
+	    String errTxt = "AnalysisException: Table already exists: ";
+	    if (msg.startsWith(errTxt)) {
+		// Conflict
+		status = 409;
+		entity = msg.replace(errTxt, "");
+	    }
 	}
+    }
 
 }
