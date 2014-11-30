@@ -43,11 +43,13 @@ public class Workhorse {
     public Workhorse(AsyncStatusHandler asyncStatusHandler) {
 	super();
 	this.asyncStatusHandler = asyncStatusHandler;
-	mapper = new ObjectMapper();
-	mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
     }
 
-    private ObjectMapper mapper;
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+    static {
+	MAPPER.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    }
 
     public void connect() throws OtterException {
 	try {
@@ -101,7 +103,7 @@ public class Workhorse {
 			continue;
 		    }
 		    try {
-			val = mapper.readValue(payload, paramTypes[0]);
+			val = MAPPER.readValue(payload, paramTypes[0]);
 		    } catch (IOException jme) {
 			Logger.log("Error parsing " + payload + " with "
 				+ paramTypes[0].getName() + ": " + jme);
@@ -241,10 +243,10 @@ public class Workhorse {
 	taskStatus.setTimestamp(System.currentTimeMillis());
 	asyncStatusHandler.handle(taskStatus);
 
-	Task task = null;
+	Task mainTask = null;
 
 	try {
-	    task = odb.getTask(id);
+	    mainTask = odb.getTask(id);
 	} catch (OtterException e) {
 	    TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
 	    errStatus.setTaskId(id);
@@ -256,89 +258,106 @@ public class Workhorse {
 	    errStatus.setInfo(errInfo);
 	    return errStatus;
 	}
+	Logger.log("Task to run: " + mainTask);
 
-	Algorithm alg = task.getAlgorithm();
-	if (alg == null) {
-	    TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
-	    errStatus.setTaskId(id);
-	    errStatus.setStatus("error");
-	    errStatus.setWorkflowId(workflowId);
-	    errStatus.setTimestamp(System.currentTimeMillis());
-	    TaskInfoError errInfo = new TaskInfoError();
-	    errInfo.setError("No algorithm found.");
-	    errStatus.setInfo(errInfo);
-	    return errStatus;
-	}
-	if (!"copy".equalsIgnoreCase(alg.getName())) {
-	    TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
-	    errStatus.setTaskId(id);
-	    errStatus.setStatus("error");
-	    errStatus.setWorkflowId(workflowId);
-	    errStatus.setTimestamp(System.currentTimeMillis());
-	    TaskInfoError errInfo = new TaskInfoError();
-	    errInfo.setError("Algorithm not yet supported: " + alg.getName());
-	    errStatus.setInfo(errInfo);
-	    return errStatus;
+	List<Task> tasksToRun;
+	if (mainTask.isComplex()) {
+	    tasksToRun = mainTask.getSubtasks();
+	    Logger.log("Complex task, will run subtasks:" + tasksToRun);
+	} else {
+	    tasksToRun = new ArrayList<Task>(1);
+	    tasksToRun.add(mainTask);
 	}
 
-	Map<Long, TaskDataSet> datasets = task.getDatasets();
-	List<WorkflowMetaData> wfs = imp.buildWorkflow(task, String
-		.valueOf(workflowId));
+	for (Task task : tasksToRun) {
+	    Algorithm alg = task.getAlgorithm();
 
-	List<MetaData> resultTables = new ArrayList<MetaData>();
-
-	// Prepare
-	for (WorkflowMetaData wf : wfs) {
-	    resultTables.add(wf.getMetaData());
-	}
-
-	TaskExecutionStatusNotification savingStatus = new TaskExecutionStatusNotification();
-	savingStatus.setTaskId(id);
-	savingStatus.setStatus("result_saving");
-	savingStatus.setWorkflowId(workflowId);
-	savingStatus.setTimestamp(System.currentTimeMillis());
-	TaskInfoResultSaved infoSaving = new TaskInfoResultSaved();
-	savingStatus.setInfo(infoSaving);
-	infoSaving.setResultTables(resultTables);
-	asyncStatusHandler.handle(savingStatus);
-
-	// Now, run..
-	TaskExecutionStatusNotification savedStatus = new TaskExecutionStatusNotification();
-	savedStatus.setTaskId(id);
-	savedStatus.setStatus("result_saved");
-	savedStatus.setWorkflowId(workflowId);
-	savedStatus.setTimestamp(System.currentTimeMillis());
-	TaskInfoResultSaved infoSaved = new TaskInfoResultSaved();
-	savedStatus.setInfo(infoSaved);
-
-	List<MetaResult> metaResult = new ArrayList<MetaResult>();
-	savedStatus.setMetaResult(metaResult);
-
-	List<MetaData> resultTables2 = new ArrayList<MetaData>();
-	infoSaved.setResultTables(resultTables2);
-
-	boolean anyWfSucceeded = false;
-	for (WorkflowMetaData wf : wfs) {
-	    try {
-		long cnt = imp.runWorkflow(wf);
-		wf.getMetaData().setRowsCount(cnt);
-		resultTables2.add(wf.getMetaData());
-		metaResult.add(wf.getMetaResult());
-		anyWfSucceeded = true;
-	    } catch (Exception e) {
+	    if (alg == null) {
 		TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
 		errStatus.setTaskId(id);
 		errStatus.setStatus("error");
 		errStatus.setWorkflowId(workflowId);
 		errStatus.setTimestamp(System.currentTimeMillis());
 		TaskInfoError errInfo = new TaskInfoError();
-		errInfo.setError(e.getMessage());
+		errInfo.setError("No algorithm found.");
+		errStatus.setInfo(errInfo);
+
+		asyncStatusHandler.handle(errStatus);
+		continue;
+	    }
+	    if (!"copy".equalsIgnoreCase(alg.getName())) {
+		TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+		errStatus.setTaskId(id);
+		errStatus.setStatus("error");
+		errStatus.setWorkflowId(workflowId);
+		errStatus.setTimestamp(System.currentTimeMillis());
+		TaskInfoError errInfo = new TaskInfoError();
+		errInfo.setError("Algorithm not yet supported: "
+			+ alg.getName());
 		errStatus.setInfo(errInfo);
 		asyncStatusHandler.handle(errStatus);
+		continue;
 	    }
-	}
-	if (anyWfSucceeded) {
-	    return savedStatus;
+
+	    Map<Long, TaskDataSet> datasets = task.getDatasets();
+	    List<WorkflowMetaData> wfs = imp.buildWorkflow(task, String
+		    .valueOf(workflowId));
+
+	    List<MetaData> resultTables = new ArrayList<MetaData>();
+
+	    // Prepare
+	    for (WorkflowMetaData wf : wfs) {
+		resultTables.add(wf.getMetaData());
+	    }
+
+	    TaskExecutionStatusNotification savingStatus = new TaskExecutionStatusNotification();
+	    savingStatus.setTaskId(id);
+	    savingStatus.setStatus("result_saving");
+	    savingStatus.setWorkflowId(workflowId);
+	    savingStatus.setTimestamp(System.currentTimeMillis());
+	    TaskInfoResultSaved infoSaving = new TaskInfoResultSaved();
+	    savingStatus.setInfo(infoSaving);
+	    infoSaving.setResultTables(resultTables);
+	    asyncStatusHandler.handle(savingStatus);
+
+	    // Now, run..
+	    TaskExecutionStatusNotification savedStatus = new TaskExecutionStatusNotification();
+	    savedStatus.setTaskId(id);
+	    savedStatus.setStatus("result_saved");
+	    savedStatus.setWorkflowId(workflowId);
+	    savedStatus.setTimestamp(System.currentTimeMillis());
+	    TaskInfoResultSaved infoSaved = new TaskInfoResultSaved();
+	    savedStatus.setInfo(infoSaved);
+
+	    List<MetaResult> metaResult = new ArrayList<MetaResult>();
+	    savedStatus.setMetaResult(metaResult);
+
+	    List<MetaData> resultTables2 = new ArrayList<MetaData>();
+	    infoSaved.setResultTables(resultTables2);
+
+	    boolean anyWfSucceeded = false;
+	    for (WorkflowMetaData wf : wfs) {
+		try {
+		    long cnt = imp.runWorkflow(wf);
+		    wf.getMetaData().setRowsCount(cnt);
+		    resultTables2.add(wf.getMetaData());
+		    metaResult.add(wf.getMetaResult());
+		    anyWfSucceeded = true;
+		} catch (Exception e) {
+		    TaskExecutionStatusNotification errStatus = new TaskExecutionStatusNotification();
+		    errStatus.setTaskId(id);
+		    errStatus.setStatus("error");
+		    errStatus.setWorkflowId(workflowId);
+		    errStatus.setTimestamp(System.currentTimeMillis());
+		    TaskInfoError errInfo = new TaskInfoError();
+		    errInfo.setError(e.getMessage());
+		    errStatus.setInfo(errInfo);
+		    asyncStatusHandler.handle(errStatus);
+		}
+	    }
+	    if (anyWfSucceeded) {
+		asyncStatusHandler.handle(savedStatus);
+	    }
 	}
 	return null;
     }

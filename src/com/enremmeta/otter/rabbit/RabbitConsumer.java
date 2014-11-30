@@ -72,31 +72,35 @@ public class RabbitConsumer extends DefaultConsumer {
 	try {
 	    // TODO Auto-generated method stub
 	    super.handleDelivery(consumerTag, envelope, properties, body);
+
 	    long deliveryTag = envelope.getDeliveryTag();
 	    String exchange = envelope.getExchange();
 	    String routingKey = envelope.getRoutingKey();
+
 	    String[] rKeyElts = routingKey.split("\\.");
 	    if (rKeyElts.length != 2) {
-		Logger.log("Rejecting, not for us: " + routingKey);
-		getChannel().basicReject(deliveryTag, false);
+		Logger.log("Ignoring, not for us: " + routingKey);
 		return;
 	    }
 	    String direction = rKeyElts[0];
 	    String op = rKeyElts[1];
 	    String payload = new String(body);
-	    Logger.log("Received message on Exchange [" + exchange
-		    + "] with routing key [" + routingKey + "]: " + payload);
+	    Logger.log("Received message " + deliveryTag + " on Exchange ["
+		    + exchange + "] with routing key [" + routingKey + "]: "
+		    + payload);
 
 	    Channel ch = getChannel();
 	    if (direction.equals("fb")) {
+		ch.basicAck(deliveryTag, false);
 		OtterMessage msg = null;
 		OtterMessage result = null;
+
 		try {
 		    Logger.log(payload);
 		    result = workhorse.dispatch(op, payload);
-		    ch.basicAck(deliveryTag, false);
 		    if (result == null) {
-			Logger.log("Nothing more to send for " + op + " and " + payload);
+			Logger.log("Nothing more to send for " + op + " and "
+				+ payload);
 			// because already emitted response.
 			return;
 		    }
@@ -146,8 +150,7 @@ public class RabbitConsumer extends DefaultConsumer {
 		    }
 		}
 	    } else {
-		Logger.log("Rejecting, not for us: " + routingKey);
-		getChannel().basicReject(deliveryTag, false);
+		Logger.log("Ignoring, not for us: " + routingKey);
 		return;
 	    }
 	} catch (Throwable ttt) {

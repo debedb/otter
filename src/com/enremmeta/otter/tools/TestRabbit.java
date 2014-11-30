@@ -131,7 +131,8 @@ public class TestRabbit implements Runnable {
 
 	// Kick this off...
 	// fRabbit.send("fb.test_cleanup", "");
-	fRabbit.send("fb.task_run", "{ \"id\" : \"93\" }");
+	fRabbit.send("fb.dataset_drop", "{ \"id\" : \"1\" }");
+//	fRabbit.send("fb.task_run", "{ \"id\" : \"179\" }");
 
 	TestRabbit f = new TestRabbit(false);
 	f.connect();

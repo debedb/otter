@@ -1,5 +1,6 @@
 package com.enremmeta.otter;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -7,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.Map;
 import java.util.Properties;
 
 import com.enremmeta.otter.entity.Algorithm;
@@ -65,7 +67,7 @@ public class OfficeDb {
 	    + " up.name UniversalPropertyName, "
 	    + " up.type UniversalPropertyType, "
 	    + " up.type_enum_values UniversalPropertyEnumVals, "
-	    + " us.name DbName "
+	    + " CONCAT('source_',us.id) DbName "
 	    + "FROM task t "
 	    + "JOIN task_data_set tds ON t.id = tds.task_id "
 	    + "JOIN task_data_set_filter tdsf ON tdsf.task_data_set_id = tds.id "
@@ -81,7 +83,7 @@ public class OfficeDb {
 	    + "tds.name TaskDataSetName, "
 	    + "tdsm.alias ModifierAlias, "
 	    + " tdsm.expression ModifierExpression, tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-	    + " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
+	    + " up.name UniversalPropertyName, up.type UniversalPropertyType, CONCAT('source_',us.id) DbName "
 	    + " FROM task_data_set tds "
 	    + " JOIN task_data_set_modifier tdsm ON tdsm.task_data_set_id = tds.id "
 	    + " JOIN task_data_set_property tdsp "
@@ -97,7 +99,7 @@ public class OfficeDb {
 	    + " tdsms.id TdsmsId, "
 	    + " tdsms.direction Direction, tdsp.id TdspId, "
 	    + " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-	    + " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
+	    + " up.name UniversalPropertyName, up.type UniversalPropertyType, CONCAT('source_',us.id) DbName "
 	    + " FROM task_data_set tds "
 	    + " JOIN task_data_set_modifier_sort tdsms ON tdsms.task_data_set_id = tds.id "
 	    + " JOIN task_data_set_property tdsp "
@@ -111,7 +113,7 @@ public class OfficeDb {
     private static final String TASK_MODIFIERS_GROUP_SQL = "SELECT tds.id TdsId, tds.name TaskDataSetName, tdsmg.id TdsmgId, "
 	    + "tdsp.id TdspId, "
 	    + " tdsp.alias PropAlias, up.title UniversalPropertyTitle, "
-	    + " up.name UniversalPropertyName, up.type UniversalPropertyType, us.name DbName "
+	    + " up.name UniversalPropertyName, up.type UniversalPropertyType,  CONCAT('source_',us.id)  DbName "
 	    + " FROM task_data_set tds "
 	    + " JOIN task_data_set_modifier_group tdsmg ON tdsmg.task_data_set_id = tds.id "
 	    + " JOIN task_data_set_property tdsp "
@@ -122,7 +124,11 @@ public class OfficeDb {
 	    + " WHERE "
 	    + " tds.task_id = ? ORDER BY tds.id, tdsmg.id, up.id, us.id";
 
-    private static final String TASK_ALGORITHM_SQL = "SELECT a.id AlgId, a.name AlgName,  a.process AlgProcess "
+    private static final String TASK_SQL = "SELECT is_complex FROM task WHERE id = ?";
+
+    private static final String SUBTASKS_SQL = " SELECT id FROM task WHERE complex_parent_id = ? ORDER BY complex_order ASC";
+
+    private static final String TASK_ALGORITHM_SQL = "SELECT a.id AlgId, a.name AlgName,  a.process AlgProcess, ta.data Data "
 	    + " FROM algorithm a "
 	    + " JOIN task_algorithm ta ON a.id = ta.algorithm_id"
 	    + " JOIN task t ON t.id = ta.task_id " + " WHERE t.id = ?";
@@ -130,7 +136,7 @@ public class OfficeDb {
     private static final String TASK_DATASET_SQL = "SELECT  t.name TaskName, tds.id TdsId, tds.name TaskDataSetName, "
 	    + " tdsp.id TdspId, tdsp.alias PropAlias, up.title UniversalPropertyTitle,  "
 	    + " up.name UniversalPropertyName,  up.type UniversalPropertyType,  "
-	    + " up.type_enum_values UniversalPropertyEnumVals, us.name DbName "
+	    + " up.type_enum_values UniversalPropertyEnumVals,  CONCAT('source_',us.id)  DbName "
 	    + " FROM task t JOIN task_data_set tds ON t.id = tds.task_id "
 	    + " JOIN task_data_set_property tdsp  ON tds.id = tdsp.task_data_set_id "
 	    + " JOIN task_data_set_source tdss ON tdsp.task_data_set_source_id = tdss.id "
@@ -183,13 +189,7 @@ public class OfficeDb {
 	}
     }
 
-    private void loadTaskAlgorithm(Task t) throws SQLException {
-	Connection c = getConnection();
-	PreparedStatement ps = c.prepareStatement(TASK_ALGORITHM_SQL);
-	ps.setLong(1, t.getId());
-	Logger.log("Executing " + TASK_ALGORITHM_SQL + " with " + t.getId());
-	ResultSet rs = ps.executeQuery();
-	// TODO many to many
+    private void showWarnings(ResultSet rs) throws SQLException {
 	SQLException warn = rs.getWarnings();
 	if (warn != null) {
 	    while (true) {
@@ -204,6 +204,49 @@ public class OfficeDb {
 		}
 	    }
 	}
+    }
+
+    private void loadTask(Task t) throws SQLException, OtterException {
+	Connection c = getConnection();
+	PreparedStatement ps = c.prepareStatement(TASK_SQL);
+	ps.setLong(1, t.getId());
+	Logger.log("Executing " + TASK_SQL + " with " + t.getId());
+	ResultSet rs = ps.executeQuery();
+	// TODO many to many
+	showWarnings(rs);
+	boolean rsNext = rs.next();
+	if (rsNext) {
+	    int isComplex = rs.getInt(1);
+	    if (isComplex > 0) {
+		t.setComplex(true);
+	    }
+	} else {
+	    Logger.log("NOTHING in result set");
+	}
+	// If complex, load subtasks
+	if (t.isComplex()) {
+	    ps = c.prepareStatement(SUBTASKS_SQL);
+	    ps.setLong(1, t.getId());
+	    Logger.log("Executing " + SUBTASKS_SQL + " with " + t.getId());
+	    rs = ps.executeQuery();
+	    // TODO many to many
+	    showWarnings(rs);
+	    while (rs.next()) {
+		long id = rs.getLong(1);
+		Task subtask = getTask(id);
+		t.getSubtasks().add(subtask);
+	    }
+	}
+    }
+
+    private void loadTaskAlgorithm(Task t) throws SQLException, OtterException {
+	Connection c = getConnection();
+	PreparedStatement ps = c.prepareStatement(TASK_ALGORITHM_SQL);
+	ps.setLong(1, t.getId());
+	Logger.log("Executing " + TASK_ALGORITHM_SQL + " with " + t.getId());
+	ResultSet rs = ps.executeQuery();
+	// TODO many to many
+	showWarnings(rs);
 	boolean rsNext = rs.next();
 	if (rsNext) {
 	    String algName = rs.getString("AlgName");
@@ -212,6 +255,15 @@ public class OfficeDb {
 	    alg.setId(rs.getLong("AlgId"));
 	    alg.setName(algName);
 
+	    String dataStr = rs.getString("Data");
+	    try {
+		Map data = Workhorse.MAPPER.readValue(dataStr, Map.class);
+
+		alg.setData(data);
+	    } catch (IOException e) {
+		throw new OtterException("Cannot parse algorithm data: "
+			+ dataStr);
+	    }
 	    alg.setProcess(rs.getString("AlgProcess"));
 	    t.setAlgorithm(alg);
 	} else {
@@ -231,7 +283,6 @@ public class OfficeDb {
 	TaskDataSetModifierSort tdsms = null;
 
 	while (rs.next()) {
-	    int i = 1;
 	    long tdsId = rs.getLong("TdsId");
 
 	    if (tdsId != prevTdsId) {
@@ -242,7 +293,6 @@ public class OfficeDb {
 		t.getDatasets().put(tdsId, tds);
 		prevTdsId = tdsId;
 	    }
-	    long tdspId = rs.getLong("TdspId");
 	    TaskDataSetProperty tdsp = loadProperty(rs);
 	    tds.getFields().add(tdsp);
 	}
@@ -336,11 +386,13 @@ public class OfficeDb {
 
     private TaskDataSetProperty loadProperty(ResultSet rs) throws SQLException {
 	TaskDataSetProperty tdsp = new TaskDataSetProperty(rs.getLong("TdspId"));
-	tdsp.setAlias(rs.getString("PropAlias"));
+	String alias = rs.getString("PropAlias");
+	tdsp.setAlias(alias);
 	tdsp.setUniversalName(rs.getString("UniversalPropertyName"));
 	tdsp.setUniversalTitle(rs.getString("UniversalPropertyTitle"));
 	tdsp.setUniversalType(rs.getString("UniversalPropertyType"));
-	tdsp.setTableName(rs.getString("DbName"));
+	String tableName = rs.getString("DbName");
+	tdsp.setTableName(tableName);
 	return tdsp;
     }
 
@@ -399,13 +451,13 @@ public class OfficeDb {
 	Task t = new Task();
 	t.setId(id);
 	try {
+	    loadTask(t);
 	    loadTaskAlgorithm(t);
 	    loadTaskDataSets(t);
 	    loadTaskFilters(t);
 	    loadTaskModifiers(t);
 	    loadTaskModifiersGroup(t);
 	    loadTaskModifiersSort(t);
-
 	    return t;
 	} catch (SQLException sqle) {
 	    throw new OtterException(sqle);
@@ -495,7 +547,7 @@ public class OfficeDb {
     public Dataset getDataset(long datasetId) throws SQLException {
 	Connection c = getConnection();
 	PreparedStatement ps = c
-		.prepareStatement("SELECT us.name, up.name, up.type FROM universal_source us "
+		.prepareStatement("SELECT CONCAT('source_',us.id), up.name, up.type FROM universal_source us "
 			+ "JOIN universal_property up ON up.universal_source_id = us.id "
 			+ "WHERE us.id = ?");
 	ps.setObject(1, datasetId);

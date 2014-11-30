@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,33 +76,78 @@ public class Impala {
 	Connection c = getConnection();
 
 	PreparedStatement ps = c.prepareStatement(sql);
-	ps.execute();
-	long retval = getCount(config.getImpalaDbName() + "." + ds.getName());
-	Logger.log("Rows: " + retval);
+	try {
+	    ps.execute();
+	    long retval = getCount(config.getImpalaDbName() + "."
+		    + ds.getName());
+	    Logger.log("Rows: " + retval);
+	} finally {
+	    closeQuietly(ps);
+	}
+    }
+
+    public void closeQuietly(Statement... ss) {
+	for (Statement s : ss) {
+	    try {
+		if (s != null) {
+		    s.close();
+		}
+	    } catch (Exception e) {
+		Logger.log("closeQuietly(" + s + "): ");
+		e.printStackTrace();
+	    }
+	}
+    }
+
+    public void closeQuietly(ResultSet rs) {
+	try {
+	    if (rs != null) {
+		rs.close();
+	    }
+	} catch (Exception e) {
+	    Logger.log("closeQuietly(" + rs + "): ");
+	    e.printStackTrace();
+	}
     }
 
     public void executeSql(String sql) throws SQLException {
 	Connection c = getConnection();
 	PreparedStatement ps = c.prepareStatement(sql);
-	Logger.log("Executing " + sql);
-	boolean result = ps.execute();
-	if (result) {
-	    ResultSet rs = ps.getResultSet();
-	    ResultSetMetaData rsmd = rs.getMetaData();
-	    int colCount = rsmd.getColumnCount();
-	    List<String> cols = new ArrayList<String>(colCount);
-	    for (int i = 1; i <= colCount; i++) {
-		cols.add(rsmd.getColumnName(i));
+	ResultSet rs = null;
+	try {
+	    Logger.log("Executing " + sql);
+	    boolean result = ps.execute();
+	    try {
+		Thread.sleep(1000);
+		Logger.log("Waiting for the operation to finish...");
+	    } catch (InterruptedException e) {
+
 	    }
-	    while (rs.next()) {
+	    if (result) {
+		rs = ps.getResultSet();
+
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int colCount = rsmd.getColumnCount();
+		List<String> cols = new ArrayList<String>(colCount);
 		for (int i = 1; i <= colCount; i++) {
-		    Logger.log(cols.get(i - 1) + ": " + rs.getObject(i));
+		    cols.add(rsmd.getColumnName(i));
 		}
+		Logger.log("Columns in result set: " + cols);
+
+		while (rs.next()) {
+		    for (int i = 1; i <= colCount; i++) {
+			Logger.log(cols.get(i - 1) + ": " + rs.getObject(i));
+		    }
+		}
+
+	    } else {
+		Logger.log("Update count: " + ps.getUpdateCount());
 	    }
-	} else {
-	    Logger.log("Update count: " + ps.getUpdateCount());
+	    Logger.log("OK");
+	} finally {
+	    closeQuietly(rs);
+	    closeQuietly(ps);
 	}
-	Logger.log("OK");
     }
 
     public long runWorkflow(WorkflowMetaData wfmd) throws Exception {
@@ -150,7 +196,6 @@ public class Impala {
 		    String exp = modifier.getExpression();
 		    String alias = modifier.getAlias();
 		    TaskDataSetProperty tdsp = modifier.getProperty();
-		    String tableName = tdsp.getTableName();
 		    if (selectClause.length() > 0) {
 			selectClause += ", ";
 		    }
@@ -265,7 +310,8 @@ public class Impala {
 			+ " " + dir;
 	    }
 	    if (tables.size() > 1) {
-		throw new OtterException("Joins unsupported yet.");
+		// TODO!!!
+		// throw new OtterException("Joins unsupported yet.");
 	    }
 	    fromClause = config.getImpalaDbName() + "." + tables.get(0);
 	    sql = "SELECT " + selectClause + " FROM " + fromClause;
@@ -315,15 +361,8 @@ public class Impala {
     }
 
     public void drop(Dataset ds) throws SQLException {
-	Connection c = getConnection();
 	String sql = "DROP TABLE " + getTableName(ds);
-	PreparedStatement ps = c.prepareStatement(sql);
-	try {
-	    ps.execute();
-	} catch (SQLException sqle) {
-	    // TODO temporary
-	    sqle.printStackTrace();
-	}
+	executeSql(sql);
     }
 
     // public void deleteDataset(String name) throws OtterException {
@@ -351,14 +390,20 @@ public class Impala {
 	String sql = "SELECT COUNT(*) FROM " + dsName;
 	Logger.log("Executing " + sql);
 	PreparedStatement ps = c.prepareStatement(sql);
-	ResultSet rs = ps.executeQuery();
-	Logger.log("OK");
-	long retval = -1;
-	if (rs.next()) {
-	    retval = (long) rs.getObject(1);
-	    // Logger.log(dsName + " currently has " + +retval + " rows");
+	ResultSet rs = null;
+	try {
+	    rs = ps.executeQuery();
+	    Logger.log("OK");
+	    long retval = -1;
+	    if (rs.next()) {
+		retval = (long) rs.getObject(1);
+		// Logger.log(dsName + " currently has " + +retval + " rows");
+	    }
+	    return retval;
+	} finally {
+	    closeQuietly(rs);
+	    closeQuietly(ps);
 	}
-	return retval;
     }
 
     @SuppressWarnings("unchecked")
@@ -371,18 +416,25 @@ public class Impala {
 	}
 
 	PreparedStatement ps = c.prepareStatement(sql);
-	ResultSet rs = ps.executeQuery();
-	ResultSetMetaData rsmd = rs.getMetaData();
-	int colCnt = rsmd.getColumnCount();
-	List retval = new ArrayList();
-	while (rs.next()) {
-	    List row = new ArrayList();
-	    for (int i = 1; i < colCnt; i++) {
-		row.add(rs.getObject(i));
+	ResultSet rs = null;
+	try {
+	    rs = ps.executeQuery();
+
+	    ResultSetMetaData rsmd = rs.getMetaData();
+	    int colCnt = rsmd.getColumnCount();
+	    List retval = new ArrayList();
+	    while (rs.next()) {
+		List row = new ArrayList();
+		for (int i = 1; i < colCnt; i++) {
+		    row.add(rs.getObject(i));
+		}
+		retval.add(row);
 	    }
-	    retval.add(row);
+	    return retval;
+	} finally {
+	    closeQuietly(rs);
+	    closeQuietly(ps);
 	}
-	return retval;
     }
 
     private String getTableName(Dataset ds) {
@@ -401,55 +453,69 @@ public class Impala {
 	List list = new ArrayList<List>();
 	PreparedStatement ps = c.prepareStatement("USE "
 		+ config.getImpalaDbName());
-	ps.execute();
-	if (metadataOnly) {
-	    query = "SELECT * FROM (" + query + " ) LIMIT 0";
-	}
-	ps = c.prepareStatement(query);
-	ResultSet rs = ps.executeQuery();
-	java.sql.ResultSetMetaData rsmd = rs.getMetaData();
-	int colCnt = rsmd.getColumnCount();
-	List meta = new ArrayList<>();
-	for (int i = 1; i <= colCnt; i++) {
-	    Map colMeta = new HashMap();
-	    colMeta.put("name", rsmd.getColumnName(i));
-	    colMeta.put("type", rsmd.getColumnTypeName(i));
-	    meta.add(colMeta);
-	}
-	map.put("metadata", meta);
-	while (rs.next()) {
-	    List row = new ArrayList();
-	    for (int i = 1; i <= colCnt; i++) {
-		row.add(rs.getObject(i));
+	ResultSet rs = null;
+	try {
+	    ps.execute();
+	    if (metadataOnly) {
+		query = "SELECT * FROM (" + query + " ) LIMIT 0";
 	    }
-	    list.add(row);
+	    ps = c.prepareStatement(query);
+	    rs = ps.executeQuery();
+	    java.sql.ResultSetMetaData rsmd = rs.getMetaData();
+	    int colCnt = rsmd.getColumnCount();
+	    List meta = new ArrayList<>();
+	    for (int i = 1; i <= colCnt; i++) {
+		Map colMeta = new HashMap();
+		colMeta.put("name", rsmd.getColumnName(i));
+		colMeta.put("type", rsmd.getColumnTypeName(i));
+		meta.add(colMeta);
+	    }
+	    map.put("metadata", meta);
+	    while (rs.next()) {
+		List row = new ArrayList();
+		for (int i = 1; i <= colCnt; i++) {
+		    row.add(rs.getObject(i));
+		}
+		list.add(row);
+	    }
+	    rs.close();
+	    map.put("data", list);
+	    return map;
+	} finally {
+	    closeQuietly(rs);
+	    closeQuietly(ps);
 	}
-	rs.close();
-	map.put("data", list);
-	return map;
     }
 
     public void refreshTable(Dataset ds) throws SQLException {
 	Connection c = getConnection();
-	String sql = "ALTER TABLE " + getTableName(ds) + " " + "SET LOCATION '"
-		+ config.getOtterHdfsPrefix() + ds.getName() + "'";
+	String sql = "REFRESH " + getTableName(ds);
+	// String sql = "ALTER TABLE " + getTableName(ds) + " " +
+	// "SET LOCATION '"
+	// + config.getOtterHdfsPrefix() + ds.getName() + "'";
 	PreparedStatement ps = c.prepareStatement(sql);
-	ps.execute();
+	try {
+	    ps.execute();
+	} finally {
+	    closeQuietly(ps);
+	}
     }
 
     public List<String> testCleanup() {
 	List<String> errors = new ArrayList<String>();
+	PreparedStatement ps = null;
+	PreparedStatement ps0 = null;
+	ResultSet rs = null;
 	try {
 
 	    Connection c = getConnection();
 
 	    String dbName = config.getImpalaDbName();
-	    PreparedStatement ps0 = c.prepareStatement("USE " + dbName);
+	    ps0 = c.prepareStatement("USE " + dbName);
 	    ps0.execute();
-
 	    String sql = "SHOW TABLES";
-	    PreparedStatement ps = c.prepareStatement(sql);
-	    ResultSet rs = ps.executeQuery();
+	    ps = c.prepareStatement(sql);
+	    rs = ps.executeQuery();
 	    ResultSetMetaData rsmd = rs.getMetaData();
 	    // for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 	    // // System.out.println(rsmd.getColumnName(i));
@@ -461,9 +527,7 @@ public class Impala {
 			String sqlDrop = "DROP TABLE "
 				+ config.getImpalaDbName() + "." + tableName;
 			Logger.log(sqlDrop);
-			PreparedStatement ps2 = c.prepareStatement(sqlDrop);
-			ps2.execute();
-			ps2.close();
+			executeSql(sqlDrop);
 		    }
 		} catch (SQLException sqle) {
 		    if (sqle
@@ -476,25 +540,24 @@ public class Impala {
 		    }
 		}
 	    }
-	    ps.close();
-	    rs.close();
-	    ;
 	} catch (SQLException sqle2) {
 	    errors.add(sqle2.getMessage());
+	} finally {
+	    closeQuietly(rs);
+	    closeQuietly(ps0, ps);
 	}
 	if (errors.size() == 0) {
 	    return null;
 	}
+
 	return errors;
     }
 
     public void updateDataset(Dataset ds) throws SQLException,
 	    ClassNotFoundException {
-	Connection c = getConnection();
 	// Dropping external tables doesn't change anything...
-	PreparedStatement ps = c.prepareStatement("DROP TABLE "
-		+ getTableName(ds));
-	ps.execute();
+	String sql = "DROP TABLE " + getTableName(ds);
+	executeSql(sql);
 	addDataset(ds);
 	refreshTable(ds);
     }
