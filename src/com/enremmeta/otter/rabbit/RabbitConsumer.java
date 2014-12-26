@@ -27,12 +27,6 @@ public class RabbitConsumer extends DefaultConsumer {
 
     private Rabbit rabbit;
 
-    // private ThreadLocal<OfficeDb> odb = new ThreadLocal<OfficeDb>();
-    //
-    // private ThreadLocal<Impala> imp = new ThreadLocal<Impala>();
-    //
-    // private ThreadLocal<CdhConnection> cdhc = new
-    // ThreadLocal<CdhConnection>();
     private Workhorse workhorse;
 
     public void connect() throws OtterException {
@@ -46,9 +40,6 @@ public class RabbitConsumer extends DefaultConsumer {
 
     public RabbitConsumer(Rabbit rabbit) {
 	super(rabbit.getChannel());
-	// odb.set(new OfficeDb());
-	// imp.set(new Impala());
-	// cdhc.set(new CdhConnection());
 	this.rabbit = rabbit;
 	asyncStatusHandler = new RabbitStatusHandler(rabbit);
 	this.workhorse = new Workhorse(asyncStatusHandler);
